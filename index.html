@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dialect Intelligence</title>
+  <meta name="description" content="A futuristic AI communication operating system designed for the next generation of global content creation.">
+  
+  <!-- CSS Stylesheet -->
+  <link rel="stylesheet" href="index.css">
+  
+  <!-- FontAwesome Icons for Futuristic UI -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+  <!-- Cybernetic Grid Backdrop & Scanline Beam -->
+  <div class="cyber-overlay">
+    <div class="cyber-grid"></div>
+    <div class="cyber-scanlines"></div>
+    <div class="vignette-glow"></div>
+  </div>
+  <div class="scanline-beam"></div>
+
+  <!-- Foreground Cockpit Container -->
+  <div class="dialect-os-container">
+    
+    <!-- FUTURISTIC NAVIGATION SIDEBAR -->
+    <aside class="os-sidebar">
+      <div class="logo-container">
+        <div class="logo-orb"></div>
+        <span class="logo-text">Dialect AI</span>
+      </div>
+      
+      <!-- OS Main Menu Links -->
+      <ul class="nav-links">
+        <li class="nav-item active" data-target="section-hero">
+          <i class="fa-solid fa-terminal"></i> Cockpit
+        </li>
+        <li class="nav-item" data-target="section-studio">
+          <i class="fa-solid fa-microphone-lines"></i> Dialect Studio
+        </li>
+        <li class="nav-item" data-target="section-analyzer">
+          <i class="fa-solid fa-share-nodes"></i> Link Analyzer
+        </li>
+        <li class="nav-item" data-target="section-scripts">
+          <i class="fa-solid fa-file-pen"></i> Script Lab
+        </li>
+        <li class="nav-item" data-target="section-dashboard">
+          <i class="fa-solid fa-chart-line"></i> AI Analytics
+        </li>
+      </ul>
+      
+      <!-- System Connection Status -->
+      <div class="sidebar-status">
+        <div class="status-row">
+          <span>SYSTEM STATE</span>
+          <span class="status-value">ONLINE</span>
+        </div>
+        <div class="status-row" style="margin-top: 8px;">
+          <span>NEMOTRON CORE</span>
+          <span class="status-value" style="color: var(--neon-cyan);">READY</span>
+        </div>
+        <div class="status-row">
+          <span>GEMMA ENGINE</span>
+          <span class="status-value" style="color: var(--neon-purple);">READY</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- OS COCKPIT MAIN BODY -->
+    <main class="os-main">
+      
+      <!-- COCKPIT STATUS HEADER -->
+      <header class="os-header">
+        <div class="system-ticker-container">
+          <span class="ticker-label">Holographic Stream</span>
+          <div style="overflow: hidden; width: 350px; position: relative;">
+            <span class="system-ticker">
+              // NEMOTRON CORE INITIALIZED // GEMMA 4 31B AT 60FPS // LOCAL MOCK MONGO INTERFACE COMMITTED // CYBERNETIC GRID ACTIVE //
+            </span>
+          </div>
+        </div>
+        
+        <!-- Database Sync Status Indicator -->
+        <div class="db-sync-indicator-header" id="db-status-indicator" style="margin-left: auto; margin-right: 15px; display: flex; align-items: center; gap: 8px; font-family: var(--font-mono); font-size: 10px; padding: 6px 12px; background: rgba(255, 255, 255, 0.03); border: 1px solid var(--glass-border); border-radius: 20px; letter-spacing: 1px;">
+          <span class="status-led led-standby" id="db-status-led" style="width: 8px; height: 8px; border-radius: 50%; background: #eab308; box-shadow: 0 0 8px #eab308; display: inline-block;"></span>
+          <span class="status-lbl" id="db-status-lbl" style="color: var(--text-secondary); text-transform: uppercase;">DB: STANDBY</span>
+        </div>
+
+        <!-- Eye-Care Mode Toggle -->
+        <button class="btn-cyber btn-cyber-secondary" id="theme-toggle" style="padding: 8px 16px; font-size: 11px; margin-right: 20px; display: flex; align-items: center; gap: 8px; border-radius: 20px;">
+          <i class="fa-solid fa-eye" style="color: var(--neon-cyan);"></i>
+          <span class="toggle-text">Eye-Care Mode</span>
+        </button>
+        
+        <!-- User Profile Trigger & Quick Action Panel -->
+        <div class="user-profile-header" id="settings-trigger" style="cursor: pointer;">
+          <div class="profile-details" style="text-align: right; margin-right: 4px;">
+            <span class="profile-name"><b>Rayyan Ahmed Khan</b></span>
+            <span class="profile-role" style="color: var(--neon-cyan); font-weight: 600;">Owner of Raynova Solution</span>
+          </div>
+          <div class="profile-avatar">
+            <img src="/assets/rayyan_avatar.jpg" alt="Rayyan Ahmed Khan" style="border: 1.5px solid var(--neon-cyan);">
+          </div>
+        </div>
+      </header>
+
+      <!-- ========================================== -->
+      <!-- 1. FULLSCREEN HERO COCKPIT SECTION -->
+      <!-- ========================================== -->
+      <section id="section-hero" class="app-section active">
+        <div class="hero-grid">
+          <div class="hero-content">
+            <div class="system-badge">
+              <span class="badge-dot"></span>
+              <span class="badge-text">Next-Gen Multi-Modal Operating System</span>
+            </div>
+            
+            <h1 class="headline-glow">
+              AI Powered<br>Dialect Intelligence
+            </h1>
+            
+            <p class="subtitle">
+              Translate, adapt, and generate human-level social media scripts across every language using hybrid Nemotron Omni context mapping & Google Gemma-4 translation engines.
+            </p>
+            
+            <div class="hero-cta">
+              <button class="btn-cyber btn-cyber-primary" data-nav="section-studio">
+                <i class="fa-solid fa-play"></i> Initialize Studio
+              </button>
+              <button class="btn-cyber btn-cyber-secondary" id="demo-video-trigger">
+                <i class="fa-solid fa-circle-play"></i> Watch Cinematic Demo
+              </button>
+            </div>
+          </div>
+          
+          <!-- Large Interactive 3D AI Orb Container -->
+          <div class="hero-3d-container">
+            <!-- 3D Canvas will render inside this container. If browser fails to initialize Three.js, fallback is automatically layered. -->
+            <div class="three-canvas-layer" id="hero-canvas-container"></div>
+            <img class="hero-fallback-image" src="assets/hero_orb.png" alt="Futuristic AI Orb">
+          </div>
+        </div>
+
+        <!-- 3. Dynamic Hybrid AI Responsibility Workflow Monitor -->
+        <div class="glass-panel cyber-corners ai-responsibility-flow">
+          <div class="pipeline-header">
+            <h3 class="pipeline-title">
+              <i class="fa-solid fa-network-wired" style="color: var(--neon-cyan); margin-right: 8px;"></i>
+              Hybrid AI Processor Pipeline Matrix
+            </h3>
+            <span class="pipeline-status-text" id="pipeline-status">IDLE - WAITING FOR INPUT STREAM</span>
+          </div>
+          
+          <div class="pipeline-nodes-container">
+            <!-- Node 1: Input -->
+            <div class="pipeline-node" id="node-input">
+              <div class="node-icon"><i class="fa-solid fa-file-audio"></i></div>
+              <h4 class="node-title">RAW USER STREAM</h4>
+              <p class="node-desc">Audio, Video, or Social URL link input</p>
+              <span class="node-badge">INPUT</span>
+            </div>
+            
+            <!-- Connector 1 -->
+            <div class="node-connector">
+              <div class="connector-pulse" id="pulse-1"></div>
+            </div>
+            
+            <!-- Node 2: Nemotron -->
+            <div class="pipeline-node" id="node-nemotron">
+              <div class="node-icon"><i class="fa-solid fa-brain"></i></div>
+              <h4 class="node-title">NVIDIA NEMOTRON 3</h4>
+              <p class="node-desc">Multimodal Scene & Regional Dialect detection</p>
+              <span class="node-badge node-badge-nemotron">NEMOTRON 3 NANO OMNI</span>
+            </div>
+            
+            <!-- Connector 2 -->
+            <div class="node-connector">
+              <div class="connector-pulse" id="pulse-2"></div>
+            </div>
+            
+            <!-- Node 3: Gemma -->
+            <div class="pipeline-node" id="node-gemma">
+              <div class="node-icon"><i class="fa-solid fa-sliders"></i></div>
+              <h4 class="node-title">GOOGLE GEMMA 4</h4>
+              <p class="node-desc">Polishing scripts, translations, captions & hooks</p>
+              <span class="node-badge node-badge-gemma">GEMMA 4 31B IT</span>
+            </div>
+            
+            <!-- Connector 3 -->
+            <div class="node-connector">
+              <div class="connector-pulse" id="pulse-3"></div>
+            </div>
+            
+            <!-- Node 4: Database -->
+            <div class="pipeline-node" id="node-database">
+              <div class="node-icon"><i class="fa-solid fa-database"></i></div>
+              <h4 class="node-title">MONGODB ATLAS</h4>
+              <p class="node-desc">Persistent local records simulation commit</p>
+              <span class="node-badge">MONGO DATA STORE</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Retro-ApeChain Styled Preview Cards -->
+        <div class="hero-features-preview">
+          <div class="glass-panel cyber-corners preview-card">
+            <i class="fa-solid fa-language"></i>
+            <h3>Multilingual Engine</h3>
+            <p>Convert regional accents and sub-dialects instantly into standardized global transcripts.</p>
+          </div>
+          <div class="glass-panel cyber-corners preview-card">
+            <i class="fa-solid fa-wand-magic-sparkles"></i>
+            <h3>Viral Social Hooks</h3>
+            <p>Analyze YouTube/TikTok pacing features and generate viral captions, summaries, and hooks.</p>
+          </div>
+          <div class="glass-panel cyber-corners preview-card">
+            <i class="fa-solid fa-volume-high"></i>
+            <h3>Voice Adaptation</h3>
+            <p>Simulate voice synthesis metrics to map emotional tones, styles, and pronunciation speeds.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- 2. STUDIO / MULTIMEDIA UPLOAD SECTION -->
+      <!-- ========================================== -->
+      <section id="section-studio" class="app-section">
+        <h2 class="headline-glow" style="font-size: 32px; margin-bottom: 10px;">Dialect Studio</h2>
+        <p class="subtitle" style="margin-bottom: 30px;">Drop multimedia logs or capture real-time vocals to initiate multi-modal analysis.</p>
+        
+        <div class="studio-layout">
+          <div class="upload-card-wrapper">
+            
+            <!-- Drag & Drop Terminal Panel -->
+            <div class="glass-panel cyber-corners dropzone-container" id="dropzone">
+              <div class="upload-icon-wrapper">
+                <i class="fa-solid fa-cloud-arrow-up"></i>
+              </div>
+              <h3 style="font-family: var(--font-title); font-size: 16px;">DRAG & DROP MEDIA LOGS</h3>
+              <p style="font-size: 12px; color: var(--text-secondary);">Supports MP3, WAV, MP4, MOV up to 100MB</p>
+              <input type="file" id="file-input" style="display: none;" accept="audio/*,video/*">
+              <button class="btn-cyber btn-cyber-secondary" style="padding: 8px 16px; font-size: 11px;">Select Local File</button>
+            </div>
+            
+            <!-- Voice Capture Cockpit Panel -->
+            <div class="glass-panel cyber-corners recording-panel">
+              <div style="display: flex; flex-direction: column; gap: 4px;">
+                <h4 style="font-size: 14px;">Capturing Live Input</h4>
+                <p id="mic-status-label" style="font-size: 11px; color: var(--text-secondary);">Mic Connection Standby</p>
+              </div>
+              <canvas class="record-waveform-canvas" id="record-canvas"></canvas>
+              <span class="record-duration-timer" id="record-timer">00:00</span>
+              <button class="mic-btn-orb" id="mic-toggle-btn">
+                <i class="fa-solid fa-microphone"></i>
+              </button>
+            </div>
+            
+            <!-- Processing Matrix parameters -->
+            <div class="glass-panel cyber-corners config-group" style="padding: 24px;">
+              <h3 style="font-size: 15px; border-bottom: 1px solid var(--glass-border); padding-bottom: 10px; margin-bottom: 10px;">
+                Pipeline Directives
+              </h3>
+              
+              <div class="stats-grid-processing" style="margin-bottom: 15px;">
+                <div class="config-group">
+                  <span class="input-label-futuristic">Original Accent</span>
+                  <select class="select-futuristic" id="select-source-accent">
+                    <option value="auto">Auto-Detect Dialect</option>
+                    <option value="en-US">American Accent (Standard)</option>
+                    <option value="en-GB">British Accent (RP)</option>
+                    <option value="ur-PK">Pakistani Urdu Accent (Urdu)</option>
+                    <option value="en-IN">Indian English Accent</option>
+                    <option value="es-MX">Mexican Spanish Accent</option>
+                  </select>
+                </div>
+                
+                <div class="config-group">
+                  <span class="input-label-futuristic">Target Dialect</span>
+                  <select class="select-futuristic" id="select-target-accent">
+                    <option value="en-GB-royal">Standard British RP Dialect</option>
+                    <option value="en-US-nyc">New York Urban Dialect</option>
+                    <option value="ur-PK-karachi">Karachi Urdu (Formal/Cultural)</option>
+                    <option value="en-US-valley">California Valley Dialect</option>
+                    <option value="es-ES">Castilian Spanish Dialect</option>
+                  </select>
+                </div>
+              </div>
+              
+              <button class="btn-cyber btn-cyber-primary" id="studio-process-btn" style="width: 100%; justify-content: center;" disabled>
+                <i class="fa-solid fa-satellite-dish"></i> Execute Multimodal Translation
+              </button>
+            </div>
+          </div>
+          
+          <!-- Simulated Terminal Stream Viewer -->
+          <div class="terminal-window">
+            <div class="terminal-header">
+              <div class="terminal-dots">
+                <span class="term-dot term-dot-red"></span>
+                <span class="term-dot term-dot-yellow"></span>
+                <span class="term-dot term-dot-green"></span>
+              </div>
+              <span class="terminal-title">DIALECT_OS_TERMINAL: ~/studio</span>
+              <div class="terminal-actions">
+                <button class="terminal-actions-btn" id="terminal-clear" title="Clear Console"><i class="fa-solid fa-eraser"></i></button>
+                <button class="terminal-actions-btn" id="terminal-copy" title="Copy Content"><i class="fa-solid fa-copy"></i></button>
+              </div>
+            </div>
+            
+            <div class="terminal-body" id="studio-terminal-body">
+              <div class="terminal-line">
+                <span class="terminal-line-prompt">guest@dialect-os:~$</span> systemctl status dialect-intelligence
+              </div>
+              <div class="terminal-line" style="color: var(--accent-green);">
+                ● Dialect OS Multimodal Perception Engine initialized (Nemotron-3-Nano)
+              </div>
+              <div class="terminal-line" style="color: var(--neon-purple);">
+                ● Language Synthesis Refinement Core connected (Gemma-4-31B)
+              </div>
+              <div class="terminal-line">
+                <span class="terminal-line-prompt">guest@dialect-os:~$</span> <span class="blink-cursor">_</span>
+              </div>
+            </div>
+            
+            <!-- Real-time processing progress bar overlay -->
+            <div class="processing-overlay" id="studio-progress-overlay" style="display: none; background: rgba(8, 8, 17, 0.95); border-top: 1px solid var(--glass-border);">
+              <div style="display: flex; justify-content: space-between; font-size: 12px; font-family: var(--font-mono);">
+                <span style="color: var(--neon-cyan);" id="progress-action-text">Extracting Audio Matrix...</span>
+                <span id="progress-percentage-text">0%</span>
+              </div>
+              <div class="progress-track">
+                <div class="progress-fill" id="studio-progress-bar"></div>
+              </div>
+              <div class="stats-grid-processing">
+                <div class="stat-item-mini">
+                  <span class="stat-label-mini">Detected Accent</span>
+                  <span class="stat-val-mini" id="stat-detected-accent">-</span>
+                </div>
+                <div class="stat-item-mini">
+                  <span class="stat-label-mini">Refined Dialect</span>
+                  <span class="stat-val-mini" id="stat-refined-dialect">-</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- 3. SOCIAL MEDIA ANALYZER SECTION -->
+      <!-- ========================================== -->
+      <section id="section-analyzer" class="app-section">
+        <h2 class="headline-glow" style="font-size: 32px; margin-bottom: 10px;">Social link Analyzer</h2>
+        <p class="subtitle" style="margin-bottom: 30px;">Paste YouTube, TikTok, or Reels links to extract viral structures, scripts, and captions instantly.</p>
+        
+        <div class="social-analyzer-layout">
+          <div class="config-group">
+            <div class="glass-panel cyber-corners" style="padding: 25px;">
+              <h3 style="font-size: 15px; margin-bottom: 20px;">1. Choose Social Ecosystem</h3>
+              <div class="platform-selector-grid">
+                <div class="glass-panel platform-card active" data-platform="youtube">
+                  <i class="fa-brands fa-youtube"></i>
+                  <h4 style="font-size: 12px; text-transform: uppercase;">YouTube</h4>
+                </div>
+                <div class="glass-panel platform-card" data-platform="tiktok">
+                  <i class="fa-brands fa-tiktok"></i>
+                  <h4 style="font-size: 12px; text-transform: uppercase;">TikTok</h4>
+                </div>
+                <div class="glass-panel platform-card" data-platform="instagram">
+                  <i class="fa-brands fa-instagram"></i>
+                  <h4 style="font-size: 12px; text-transform: uppercase;">Instagram</h4>
+                </div>
+              </div>
+              
+              <h3 style="font-size: 15px; margin-bottom: 15px;">2. Paste Stream Link</h3>
+              <div class="config-group" style="gap: 10px; margin-bottom: 20px;">
+                <input type="url" class="input-futuristic" id="social-link-input" placeholder="e.g. https://www.youtube.com/watch?v=..." style="font-family: var(--font-mono);">
+              </div>
+              
+              <button class="btn-cyber btn-cyber-primary" id="analyzer-btn" style="width: 100%; justify-content: center;">
+                <i class="fa-solid fa-magnifying-glass-chart"></i> Fetch and Map Intelligence
+              </button>
+            </div>
+            
+            <!-- Graphic AI Globe Render Container -->
+            <div class="glass-panel cyber-corners" style="padding: 25px;">
+              <h3 style="font-size: 15px; margin-bottom: 10px;">Holographic Translation Nodes</h3>
+              <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 15px;">Three.js wireframe visualization of regional dialect linkages.</p>
+              
+              <div class="globe-3d-visual-layer">
+                <div class="three-canvas-layer" id="globe-canvas-container"></div>
+                <img class="hero-fallback-image" src="assets/ai_globe.png" alt="Holographic Globe" style="width: 65%;">
+              </div>
+              
+              <div class="globe-nodes-list" id="globe-node-list">
+                <span class="globe-node-chip active" data-node="PK">Karachi Urdu (PK)</span>
+                <span class="globe-node-chip" data-node="US">NYC English (US)</span>
+                <span class="globe-node-chip" data-node="GB">RP London (GB)</span>
+                <span class="globe-node-chip" data-node="MX">Mexico City (MX)</span>
+                <span class="globe-node-chip" data-node="JP">Tokyo Dialect (JP)</span>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Analysis Dashboard Output -->
+          <div class="terminal-window" id="analyzer-result-terminal" style="min-height: 550px;">
+            <div class="terminal-header">
+              <div class="terminal-dots">
+                <span class="term-dot term-dot-red"></span>
+                <span class="term-dot term-dot-yellow"></span>
+                <span class="term-dot term-dot-green"></span>
+              </div>
+              <span class="terminal-title">SOCIAL_INTELLIGENCE: ~/output</span>
+              <div class="terminal-actions">
+                <button class="terminal-actions-btn" id="analyzer-result-copy" title="Copy Results"><i class="fa-solid fa-copy"></i></button>
+              </div>
+            </div>
+            
+            <div class="terminal-body" id="analyzer-terminal-body" style="padding: 30px;">
+              <!-- Waiting display -->
+              <div class="terminal-line" id="analyzer-waiting-msg" style="text-align: center; margin-top: 150px;">
+                <i class="fa-solid fa-circle-nodes" style="font-size: 48px; color: var(--border-neon-cyan); margin-bottom: 20px; display: block; animation: float-3d 3s infinite ease-in-out;"></i>
+                <h4 style="font-family: var(--font-title); font-size: 16px; margin-bottom: 5px;">Awaiting Stream Matrix Analysis</h4>
+                <p style="font-size: 12px; color: var(--text-muted); max-width: 320px; margin: 0 auto;">Nemotron Omni will decode video/audio cues, then Gemma 4 31B will print out highly refined social media assets.</p>
+              </div>
+            </div>
+            
+            <!-- Real-time processing progress bar overlay -->
+            <div class="processing-overlay" id="analyzer-progress-overlay" style="display: none; background: rgba(8, 8, 17, 0.95); border-top: 1px solid var(--glass-border);">
+              <div style="display: flex; justify-content: space-between; font-size: 12px; font-family: var(--font-mono);">
+                <span style="color: var(--neon-cyan);" id="analyzer-progress-action">Downloading Stream Audio...</span>
+                <span id="analyzer-progress-percent">0%</span>
+              </div>
+              <div class="progress-track">
+                <div class="progress-fill" id="analyzer-progress-bar"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- 4. SOCIAL MEDIA SCRIPT GENERATOR -->
+      <!-- ========================================== -->
+      <section id="section-scripts" class="app-section">
+        <h2 class="headline-glow" style="font-size: 32px; margin-bottom: 10px;">Script Lab</h2>
+        <p class="subtitle" style="margin-bottom: 30px;">Select pre-built visual templates and prompt Gemma 4 31B to write viral cinematic scripts.</p>
+        
+        <div class="social-analyzer-layout">
+          <div class="config-group">
+            <div class="glass-panel cyber-corners" style="padding: 25px;">
+              <h3 style="font-size: 15px; margin-bottom: 20px;">1. Choose Script Architecture</h3>
+              <div class="templates-list">
+                <div class="glass-panel template-card active" data-template="tiktok-viral">
+                  <h4 style="color: var(--neon-cyan);"><i class="fa-brands fa-tiktok" style="margin-right: 8px;"></i>TikTok Pacing</h4>
+                  <p>Fast-paced, heavy cuts, high dynamic loops, 15-30s hooks.</p>
+                </div>
+                <div class="glass-panel template-card" data-template="reels-trend">
+                  <h4 style="color: var(--neon-purple);"><i class="fa-brands fa-instagram" style="margin-right: 8px;"></i>Reel Storytelling</h4>
+                  <p>Aesthetic, emotional transitions, high tone volume, 30-60s.</p>
+                </div>
+                <div class="glass-panel template-card" data-template="shorts-loop">
+                  <h4 style="color: #ff0000;"><i class="fa-brands fa-youtube" style="margin-right: 8px;"></i>Shorts Loop</h4>
+                  <p>Educational hooks, micro-narratives, perfect audio looping structures.</p>
+                </div>
+                <div class="glass-panel template-card" data-template="explainer-cinematic">
+                  <h4 style="color: var(--accent-green);"><i class="fa-solid fa-film" style="margin-right: 8px;"></i>Sci-Fi Explainer</h4>
+                  <p>Tesla-inspired visuals description, immersive ambient narrative script.</p>
+                </div>
+              </div>
+              
+              <h3 style="font-size: 15px; margin-bottom: 15px;">2. Visual Theme & Accent Mandates</h3>
+              <div class="stats-grid-processing" style="margin-bottom: 20px;">
+                <div class="config-group">
+                  <span class="input-label-futuristic">Voice Pacing Rate</span>
+                  <select class="select-futuristic" id="script-pacing-select">
+                    <option value="fast">Aggressive (160 words/min)</option>
+                    <option value="medium" selected>Expressive (135 words/min)</option>
+                    <option value="slow">Dramatic (100 words/min)</option>
+                  </select>
+                </div>
+                <div class="config-group">
+                  <span class="input-label-futuristic">Dialect Tone Intensity</span>
+                  <select class="select-futuristic" id="script-intensity-select">
+                    <option value="high">Heavy Cultured Accent</option>
+                    <option value="moderate" selected>Subtle Adaptations</option>
+                    <option value="standard">Neutral Transcribe Accent</option>
+                  </select>
+                </div>
+              </div>
+              
+              <h3 style="font-size: 15px; margin-bottom: 15px;">3. Custom Directives (Prompt)</h3>
+              <textarea class="input-futuristic" id="script-prompt-input" rows="4" placeholder="e.g. Write a tech explainer about the Apple Vision Pro but using NYC street dialect..." style="resize: none; font-family: var(--font-body); margin-bottom: 20px;"></textarea>
+              
+              <button class="btn-cyber btn-cyber-primary" id="script-generate-btn" style="width: 100%; justify-content: center;">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> Synthesize Cinematic Script
+              </button>
+            </div>
+            
+            <!-- Graphic Social Media Cards Render -->
+            <div class="glass-panel cyber-corners" style="padding: 25px; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 250px;">
+              <h3 style="font-size: 15px; margin-bottom: 15px; font-family: var(--font-title); text-align: left; width: 100%;">Gemma Generation Assets</h3>
+              <img src="assets/social_media_ai.png" alt="Social Media Generator" style="max-width: 80%; border-radius: 12px; animation: float-3d 5s ease-in-out infinite;">
+            </div>
+          </div>
+          
+          <!-- Script output terminal -->
+          <div class="terminal-window" id="script-result-terminal" style="min-height: 550px;">
+            <div class="terminal-header">
+              <div class="terminal-dots">
+                <span class="term-dot term-dot-red"></span>
+                <span class="term-dot term-dot-yellow"></span>
+                <span class="term-dot term-dot-green"></span>
+              </div>
+              <span class="terminal-title">SCRIPT_LAB_STREAM: ~/viral-output</span>
+              <div class="terminal-actions">
+                <button class="terminal-actions-btn" id="script-result-copy" title="Copy Script"><i class="fa-solid fa-copy"></i></button>
+              </div>
+            </div>
+            
+            <div class="terminal-body" id="script-terminal-body" style="padding: 30px;">
+              <!-- Waiting display -->
+              <div class="terminal-line" id="script-waiting-msg" style="text-align: center; margin-top: 150px;">
+                <i class="fa-solid fa-signature" style="font-size: 48px; color: var(--border-neon-purple); margin-bottom: 20px; display: block; animation: float-3d 3.5s infinite ease-in-out;"></i>
+                <h4 style="font-family: var(--font-title); font-size: 16px; margin-bottom: 5px;">Awaiting Script Synthesis Command</h4>
+                <p style="font-size: 12px; color: var(--text-muted); max-width: 320px; margin: 0 auto;">Google Gemma 4 31B will write high-end visual cues, voice narration, hook titles, and hashtag directories in this interface.</p>
+              </div>
+            </div>
+            
+            <!-- Real-time processing progress bar overlay -->
+            <div class="processing-overlay" id="script-progress-overlay" style="display: none; background: rgba(8, 8, 17, 0.95); border-top: 1px solid var(--glass-border);">
+              <div style="display: flex; justify-content: space-between; font-size: 12px; font-family: var(--font-mono);">
+                <span style="color: var(--neon-purple);" id="script-progress-action">Injecting Prompt Seeds...</span>
+                <span id="script-progress-percent">0%</span>
+              </div>
+              <div class="progress-track">
+                <div class="progress-fill" id="script-progress-bar" style="background: linear-gradient(90deg, var(--neon-purple), var(--neon-cyan));"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- 5. ADVANCED MOCK SAAS DATABASE / DASHBOARD -->
+      <!-- ========================================== -->
+      <section id="section-dashboard" class="app-section">
+        <h2 class="headline-glow" style="font-size: 32px; margin-bottom: 10px;">AI Operating System Control Panel</h2>
+        <p class="subtitle" style="margin-bottom: 30px;">Analytics and persistent local records mapped to User, Upload, Transcript, and Social collections.</p>
+        
+        <!-- Highlighted Operator Intro Banner -->
+        <div class="glass-panel cyber-corners operator-profile-banner" style="padding: 24px; margin-bottom: 35px; display: flex; align-items: center; gap: 24px; background: linear-gradient(135deg, rgba(212, 175, 55, 0.12) 0%, rgba(8, 8, 17, 0.7) 100%); border: 1px dashed #D4AF37; box-shadow: 0 0 25px rgba(212, 175, 55, 0.25);">
+          <div class="operator-avatar-wrapper" style="position: relative; width: 70px; height: 70px;">
+            <div class="avatar-ring-pulse" style="position: absolute; top: -6px; left: -6px; right: -6px; bottom: -6px; border: 2.5px solid #D4AF37; border-radius: 50%; animation: led-pulse-standby 2s infinite ease-in-out;"></div>
+            <img src="/assets/rayyan_avatar.jpg" alt="Rayyan Ahmed Khan" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 2px solid var(--neon-cyan);">
+          </div>
+          <div class="operator-details-text">
+            <span class="ticker-label" style="font-size: 9px; letter-spacing: 2px; color: var(--neon-cyan); text-transform: uppercase; display: block; margin-bottom: 6px; font-family: var(--font-mono);">// PRIMARY SYSTEM OPERATOR IDENTIFIED //</span>
+            <h3 style="font-family: var(--font-title); font-size: 24px; font-weight: 800; color: #fff; margin: 0 0 6px 0; text-shadow: 0 0 12px rgba(255, 255, 255, 0.35); letter-spacing: 0.5px;">
+              Rayyan Ahmed Khan
+            </h3>
+            <p style="font-family: var(--font-mono); font-size: 13px; color: #D4AF37; margin: 0; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; text-shadow: 0 0 8px rgba(212, 175, 55, 0.35);">
+              Owner of Raynova Solution
+            </p>
+          </div>
+          <div class="system-clear-badge" style="margin-left: auto; text-align: right; border-left: 1px solid var(--glass-border); padding-left: 24px;">
+            <span style="font-size: 10px; color: var(--text-muted); display: block; font-family: var(--font-mono); letter-spacing: 1px;">SYSTEM PRIVILEGES</span>
+            <span style="font-size: 15px; color: var(--accent-green); font-weight: 800; font-family: var(--font-mono); letter-spacing: 1px; text-shadow: 0 0 10px rgba(56, 189, 248, 0.25);">ROOT_OWNER</span>
+          </div>
+        </div>
+        
+        <!-- SaaS Analytics widgets -->
+        <div class="dashboard-grid-stats">
+          <div class="glass-panel cyber-corners dashboard-stat-card">
+            <div class="dash-stat-icon"><i class="fa-solid fa-database"></i></div>
+            <div class="dash-stat-info">
+              <span class="dash-stat-label">Total DB Logs</span>
+              <span class="dash-stat-value" id="stats-db-logs">0</span>
+            </div>
+          </div>
+          <div class="glass-panel cyber-corners dashboard-stat-card">
+            <div class="dash-stat-icon" style="color: var(--neon-purple);"><i class="fa-solid fa-server"></i></div>
+            <div class="dash-stat-info">
+              <span class="dash-stat-label">AI Requests</span>
+              <span class="dash-stat-value" id="stats-ai-requests">0</span>
+            </div>
+          </div>
+          <div class="glass-panel cyber-corners dashboard-stat-card">
+            <div class="dash-stat-icon" style="color: var(--accent-green);"><i class="fa-solid fa-stopwatch"></i></div>
+            <div class="dash-stat-info">
+              <span class="dash-stat-label">Avg Process Speed</span>
+              <span class="dash-stat-value" id="stats-avg-speed">0.0s</span>
+            </div>
+          </div>
+          <div class="glass-panel cyber-corners dashboard-stat-card">
+            <div class="dash-stat-icon" style="color: #ffcc00;"><i class="fa-solid fa-bolt"></i></div>
+            <div class="dash-stat-info">
+              <span class="dash-stat-label">API Key Status</span>
+              <span class="dash-stat-value" id="stats-api-key-status" style="font-size: 16px; margin-top: 8px;">UNVERIFIED</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Database Collections Visual Table Panel -->
+        <div class="glass-panel cyber-corners database-table-panel">
+          <div class="db-panel-header">
+            <h3 class="db-title">
+              <span class="db-pulse-dot"></span>
+              Live Database Collections: <span style="font-family: var(--font-mono); color: var(--neon-cyan); margin-left: 5px;">DIALECT_INTELLIGENCE_DB</span>
+            </h3>
+            
+            <div class="db-actions">
+              <button class="btn-cyber btn-cyber-secondary" id="db-clear-btn" style="padding: 8px 16px; font-size: 11px;">
+                <i class="fa-solid fa-trash-can"></i> Purge Local Database
+              </button>
+            </div>
+          </div>
+          
+          <div class="table-wrapper">
+            <table class="db-table-custom" id="db-table">
+              <thead>
+                <tr>
+                  <th>SCHEMA / COLLECTION</th>
+                  <th>SOURCE LOG PATH</th>
+                  <th>DETECTED DIALECT / METRICS</th>
+                  <th>TIMESTAMP DETECTED</th>
+                  <th>COCKPIT ACTION</th>
+                </tr>
+              </thead>
+              <tbody id="db-table-body">
+                <!-- Data will load dynamically from localStorage -->
+                <tr>
+                  <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 40px;">
+                    <i class="fa-solid fa-box-open" style="font-size: 24px; margin-bottom: 10px; display: block;"></i>
+                    No documents committed to local storage databases. Go to Dialect Studio or Link Analyzer to write records.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- FINAL CTA FOOTER OVERLAY -->
+      <!-- ========================================== -->
+      <footer style="padding: 40px; margin-top: auto; border-top: 1px solid var(--glass-border); text-align: center; background: rgba(3, 3, 7, 0.85); font-family: var(--font-mono); font-size: 11px; color: var(--text-muted);">
+        <p>© 2026 DIALECT INTELLIGENCE SYSTEMS INC. MULTIMODAL COCKPIT v1.0.1. PROPersisted locally via LocalStorage Mongoose Schema simulation.</p>
+      </footer>
+    </main>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- 6. SLIDEOUT SETTINGS COCKPIT HUD PANEL -->
+  <!-- ========================================== -->
+  <div class="hud-overlay-backdrop" id="hud-backdrop"></div>
+  <aside class="settings-hud-panel" id="settings-hud">
+    <div class="hud-header">
+      <h3 class="hud-title"><i class="fa-solid fa-sliders"></i> Engine Directives</h3>
+      <button class="hud-close" id="settings-hud-close"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    
+    <div class="settings-group-hud">
+      <!-- OpenRouter Key Verification Card -->
+      <div class="settings-card-hud">
+        <h4 class="settings-card-title"><i class="fa-solid fa-key" style="color: var(--neon-cyan);"></i> OpenRouter API Portal</h4>
+        <p style="font-size: 11px; color: var(--text-secondary); margin-bottom: 12px; line-height: 1.4;">
+          The system will automatically try to read the OpenRouter key configured in your local <span style="font-family: var(--font-mono); color: var(--neon-purple);">.env</span> file when running.
+        </p>
+        <span class="input-label-futuristic" style="margin-bottom: 6px;">Parsed Key Signature</span>
+        <input type="text" class="input-futuristic" id="settings-api-key" placeholder="Read .env key or enter manually..." style="font-family: var(--font-mono); font-size: 11px; padding: 8px 12px;" readonly>
+        <div style="display: flex; gap: 8px; margin-top: 12px;">
+          <button class="btn-cyber btn-cyber-primary" id="btn-reload-env" style="padding: 6px 12px; font-size: 10px; width: 100%; justify-content: center;">
+            <i class="fa-solid fa-arrows-rotate"></i> Sync .env Keys
+          </button>
+        </div>
+      </div>
+      
+      <!-- Nvidia Nemotron parameters -->
+      <div class="settings-card-hud">
+        <h4 class="settings-card-title" style="border-bottom: 1px solid var(--glass-border); padding-bottom: 10px;"><i class="fa-solid fa-brain" style="color: var(--accent-green);"></i> NVIDIA Nemotron Omni</h4>
+        <p style="font-size: 11px; color: var(--text-secondary); margin-bottom: 15px; line-height: 1.4;">
+          Nemotron acts as the multimodal perception agent, extracting scene contexts, accents, emotional weights, and speech patterns.
+        </p>
+        
+        <div class="config-group" style="gap: 12px;">
+          <div>
+            <div class="input-label-futuristic" style="margin-bottom: 6px;">
+              <span>Scene Extraction Pacing</span>
+              <span id="label-val-nemotron-pacing">0.85</span>
+            </div>
+            <input type="range" class="slider-futuristic" id="slider-nemotron-pacing" min="0.1" max="1.0" step="0.05" value="0.85">
+          </div>
+          <div>
+            <div class="input-label-futuristic" style="margin-bottom: 6px;">
+              <span>Multimodal Accuracy weights</span>
+              <span id="label-val-nemotron-weights">30B</span>
+            </div>
+            <input type="range" class="slider-futuristic" id="slider-nemotron-weights" min="1" max="3" step="1" value="2">
+          </div>
+        </div>
+      </div>
+      
+      <!-- Google Gemma 4 parameters -->
+      <div class="settings-card-hud">
+        <h4 class="settings-card-title" style="border-bottom: 1px solid var(--glass-border); padding-bottom: 10px;"><i class="fa-solid fa-sliders" style="color: var(--neon-purple);"></i> Google Gemma 4 31B</h4>
+        <p style="font-size: 11px; color: var(--text-secondary); margin-bottom: 15px; line-height: 1.4;">
+          Gemma serves as the narrative structure designer, generating polished hooks, translations, captions, and scripts.
+        </p>
+        
+        <div class="config-group" style="gap: 12px;">
+          <div>
+            <div class="input-label-futuristic" style="margin-bottom: 6px;">
+              <span>Writing Temperature</span>
+              <span id="label-val-gemma-temp">0.70</span>
+            </div>
+            <input type="range" class="slider-futuristic" id="slider-gemma-temp" min="0.1" max="1.0" step="0.05" value="0.7">
+          </div>
+          <div>
+            <div class="input-label-futuristic" style="margin-bottom: 6px;">
+              <span>Refinement constraints</span>
+              <span id="label-val-gemma-refine">High</span>
+            </div>
+            <input type="range" class="slider-futuristic" id="slider-gemma-refine" min="1" max="3" step="1" value="3">
+          </div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ========================================== -->
+  <!-- HOLOGRAPHIC CINEMATIC DEMO MODAL PLAYER -->
+  <!-- ========================================== -->
+  <div class="cinematic-modal-overlay" id="demo-modal">
+    <div class="cinematic-modal-container glass-panel cyber-corners">
+      
+      <!-- Close/Shutdown Trigger -->
+      <button class="demo-close-btn" id="demo-modal-close" title="Force Shutdown Simulation">
+        <i class="fa-solid fa-power-off"></i> SHUTDOWN
+      </button>
+
+      <!-- Holographic Cockpit Title -->
+      <div class="demo-modal-header">
+        <div class="demo-title-pulse"></div>
+        <h2 class="demo-title"><i class="fa-solid fa-circle-play"></i> DIALECT_OS: CINEMATIC_DEMO.EXE</h2>
+      </div>
+
+      <div class="demo-grid-layout">
+        
+        <!-- Interactive Simulated Viewport (Canvas and scanning elements) -->
+        <div class="demo-viewport-panel glass-panel">
+          <canvas id="demo-viewport-canvas"></canvas>
+          <div class="viewport-overlay-scan"></div>
+          <div class="viewport-scan-laser" id="demo-laser"></div>
+          <div class="viewport-grid-mesh"></div>
+          
+          <!-- Virtual holographic video controls overlay -->
+          <div class="viewport-hud-overlay">
+            <div class="hud-top-row">
+              <span class="hud-badge"><i class="fa-solid fa-satellite"></i> STREAM FEED</span>
+              <span class="hud-time" id="demo-hud-timer">00:00:00</span>
+            </div>
+            
+            <div class="hud-center-graphic" id="demo-hud-center">
+              <i class="fa-solid fa-wave-square pulse-icon"></i>
+              <div class="hud-dial-rotation"></div>
+            </div>
+
+            <!-- Typing subtitles overlay -->
+            <div class="hud-subtitle-box" id="demo-subtitle-box">
+              [SYSTEM]: Tap PLAY to begin cinematic AI cockpit simulation...
+            </div>
+          </div>
+        </div>
+
+        <!-- Timeline Processing Nodes Panel -->
+        <div class="demo-timeline-panel glass-panel">
+          <h3 class="timeline-panel-title"><i class="fa-solid fa-network-wired"></i> EXECUTION STAGES</h3>
+          
+          <div class="demo-timeline-steps">
+            <div class="demo-step" id="demo-step-1">
+              <div class="step-num">01</div>
+              <div class="step-details">
+                <h4>Vocal Matrix Capture</h4>
+                <p>Decoding sub-dialect audio waves and phoneme maps.</p>
+              </div>
+              <div class="step-status"><i class="fa-solid fa-spinner fa-spin"></i></div>
+            </div>
+            <div class="demo-step" id="demo-step-2">
+              <div class="step-num">02</div>
+              <div class="step-details">
+                <h4>Nemotron Regional Identification</h4>
+                <p>NVIDIA Omni contextual register mapping.</p>
+              </div>
+              <div class="step-status"><i class="fa-solid fa-clock"></i></div>
+            </div>
+            <div class="demo-step" id="demo-step-3">
+              <div class="step-num">03</div>
+              <div class="step-details">
+                <h4>Gemma Narrative Translation</h4>
+                <p>Google Gemma 4 viral scripts formulation.</p>
+              </div>
+              <div class="step-status"><i class="fa-solid fa-clock"></i></div>
+            </div>
+            <div class="demo-step" id="demo-step-4">
+              <div class="step-num">04</div>
+              <div class="step-details">
+                <h4>Persistent MongoDB Commit</h4>
+                <p>Writing transcripts schemas to database.</p>
+              </div>
+              <div class="step-status"><i class="fa-solid fa-clock"></i></div>
+            </div>
+          </div>
+
+          <!-- Simulation Audio Controls & Console Logs -->
+          <div class="demo-volume-group">
+            <div class="audio-control-row">
+              <span><i class="fa-solid fa-volume-high"></i> Synthesizer Sound Core</span>
+              <button class="btn-cyber btn-cyber-secondary" id="demo-audio-toggle" style="padding: 6px 12px; font-size: 10px;">
+                <i class="fa-solid fa-volume-high"></i> UNMUTE
+              </button>
+            </div>
+            <div class="demo-console-box" id="demo-console-logs">
+              DIALECT_OS // SIMULATOR_READY // INJECT_SEED_STREAM
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Simulated Video Player Controls bar at bottom -->
+      <div class="demo-controls-bar">
+        <button class="play-btn-round" id="demo-play-btn" title="Toggle Demo">
+          <i class="fa-solid fa-play"></i>
+        </button>
+        
+        <div class="demo-progress-wrapper">
+          <div class="progress-bar-track" id="demo-progress-track">
+            <div class="progress-bar-fill" id="demo-progress-fill"></div>
+          </div>
+          <span class="progress-time-display" id="demo-time-display">00:00 / 00:20</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Dynamic Notification Notifier Hud -->
+  <div class="notifier-hud notifier-success" id="notification-bar">
+    <i class="fa-solid fa-circle-check" id="notification-icon"></i>
+    <span id="notification-text">Database logs loaded.</span>
+  </div>
+
+  <!-- CDN Loader Libraries: Three.js for 3D shaders, GSAP for smooth timeline motions -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  
+  <!-- Main Application Logic Script -->
+  <script src="app.js"></script>
+
+</body>
+</html>
