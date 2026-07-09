@@ -1,4 +1,3 @@
 node_modules/
 database.json
 temp-request.json
-.env
