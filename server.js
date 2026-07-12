@@ -142,15 +142,128 @@ app.get('/api/sync-env', (req, res) => {
     const envPath = path.join(__dirname, '.env');
     if (fs.existsSync(envPath)) {
       const content = fs.readFileSync(envPath, 'utf8');
-      const keyRegex = /apiKey:\s*'([^']+)'/;
-      const match = content.match(keyRegex);
-      if (match && match[1]) {
-        return res.json({ success: true, apiKey: match[1] });
+      const primaryMatch = content.match(/OPENROUTER_API_KEY\s*=\s*([^\r\n]+)/);
+      const altMatch = content.match(/OPENROUTER_API_KEY_ALT\s*=\s*([^\r\n]+)/);
+      const primaryKey = primaryMatch ? primaryMatch[1].trim().replace(/^['"]|['"]$/g, '') : '';
+      const altKey = altMatch ? altMatch[1].trim().replace(/^['"]|['"]$/g, '') : '';
+      if (primaryKey || altKey) {
+        return res.json({ success: true, apiKey: primaryKey, apiKeyAlt: altKey });
       }
     }
     res.json({ success: false, message: "No key found in environmental settings." });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
+  }
+});
+
+app.post('/api/openrouter', async (req, res) => {
+  try {
+    const {
+      messages,
+      model,
+      modelType = 'gemma',
+      temperature,
+      max_tokens = 1024,
+      top_p = 0.9,
+      frequency_penalty = 0.0,
+      presence_penalty = 0.0
+    } = req.body || {};
+
+    const apiKeyCandidates = modelType === 'nemotron'
+      ? [process.env.OPENROUTER_API_KEY_ALT, process.env.OPENROUTER_API_KEY]
+      : [process.env.OPENROUTER_API_KEY, process.env.OPENROUTER_API_KEY_ALT];
+
+    const apiKeys = apiKeyCandidates.filter(Boolean);
+    if (apiKeys.length === 0) {
+      return res.status(400).json({ success: false, error: 'No OpenRouter API key configured on the server.' });
+    }
+
+    if (!messages || !Array.isArray(messages) || !model) {
+      return res.status(400).json({ success: false, error: 'Missing OpenRouter payload parameters.' });
+    }
+
+    const resolvedTemperature = typeof temperature === 'number'
+      ? temperature
+      : modelType === 'nemotron'
+        ? 0.12
+        : 0.25;
+
+    const makeRequest = async (apiKey) => {
+      const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          Authorization: `Bearer ${apiKey}`,
+          'X-Title': 'Dialect Intelligence Cinematic Console'
+        },
+        body: JSON.stringify({
+          model,
+          messages,
+          temperature: resolvedTemperature,
+          max_tokens,
+          top_p,
+          frequency_penalty,
+          presence_penalty
+        })
+      });
+
+      const rawText = await response.text();
+      let data;
+      try {
+        data = JSON.parse(rawText);
+      } catch (parseErr) {
+        throw { type: 'parse', response, rawText, parseErr };
+      }
+
+      return { response, data, rawText };
+    };
+
+    let lastError = null;
+    for (let index = 0; index < apiKeys.length; index += 1) {
+      const currentKey = apiKeys[index];
+      try {
+        const { response, data, rawText } = await makeRequest(currentKey);
+        if (response.ok && data.choices?.[0]?.message?.content) {
+          return res.json({
+            success: true,
+            content: data.choices[0].message.content,
+            keyUsed: index === 0 ? 'primary' : 'secondary'
+          });
+        }
+
+        const status = response.status || 500;
+        const message = data.error?.message || data.error || 'OpenRouter request failed.';
+        const retryable = [429, 502, 503, 504].includes(status);
+        lastError = { status, message, details: rawText, provider: data.error?.provider_name || 'OpenRouter' };
+
+        console.error('[OpenRouter] API error response:', lastError);
+        if (!retryable || index === apiKeys.length - 1) break;
+        console.warn(`[OpenRouter] Retrying request with alternate key after ${status}.`);
+        continue;
+      } catch (err) {
+        if (err.type === 'parse') {
+          console.error('[OpenRouter] Invalid JSON response:', err.rawText);
+          return res.status(err.response?.status || 500).json({ success: false, error: 'OpenRouter returned invalid JSON', details: err.rawText });
+        }
+
+        lastError = {
+          status: err.response?.status || 500,
+          message: err.message || 'OpenRouter request failed.',
+          details: err.rawText || ''
+        };
+        console.error('[OpenRouter] Fetch error:', lastError);
+        if (index === apiKeys.length - 1) break;
+      }
+    }
+
+    return res.status(lastError?.status || 500).json({
+      success: false,
+      error: lastError?.message || 'OpenRouter request failed.',
+      details: lastError?.details || 'No response body returned from OpenRouter.'
+    });
+  } catch (e) {
+    return res.status(500).json({ success: false, error: e.message });
   }
 });
 

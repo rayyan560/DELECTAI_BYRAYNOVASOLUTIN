@@ -13,7 +13,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // ==========================================
   const state = {
     activeSection: 'section-hero',
-    apiKey: 'sk-or-v1-YOUR_API_KEY_HERE', // Add your OpenRouter API key here
+    apiKey: '',
+    nemotronApiKey: '',
     isServerOnline: false,
     database: {
       users: [],
@@ -34,9 +35,33 @@ document.addEventListener('DOMContentLoaded', () => {
     selectedTemplate: 'tiktok-viral',
     nemotronPacing: 0.85,
     nemotronWeights: 2, // 1: 15B, 2: 30B, 3: 70B
-    gemmaTemp: 0.7,
+    gemmaTemp: 0.25,
     gemmaRefine: 3 // 1: Low, 2: Medium, 3: High
   };
+
+  // ==========================================
+  // LANGUAGE CODE -> REAL LANGUAGE NAME MAP
+  // Used to build accurate AI translation prompts
+  // ==========================================
+  const LANGUAGE_MAP = {
+    'ur-PK-karachi': { name: 'Urdu', script: 'نستعلیق', rtl: true,  sampleHello: 'ہیلو، آپ کیسے ہیں؟' },
+    'ps-PK':         { name: 'Pashto', script: 'Arabic', rtl: true,  sampleHello: 'سلام، تاسو سم یاست؟' },
+    'sd-PK':         { name: 'Sindhi', script: 'Arabic', rtl: true,  sampleHello: 'هيلو، توهان ڪيئن آهيو؟' },
+    'pa-PK':         { name: 'Punjabi', script: 'Shahmukhi', rtl: true, sampleHello: 'ہیلو، تُسی کیویں ہو؟' },
+    'skr-PK':        { name: 'Saraiki', script: 'Shahmukhi', rtl: true, sampleHello: 'ہیلو، تساں کیویں ہو؟' },
+    'bal-PK':        { name: 'Balochi', script: 'Arabic', rtl: true,  sampleHello: 'سلام، شما چطور ایت؟' },
+    'brh-PK':        { name: 'Brahvi', script: 'Arabic', rtl: true,   sampleHello: 'سلام، آپ کیسے ہیں؟' },
+    'hnd-PK':        { name: 'Hindko', script: 'Shahmukhi', rtl: true, sampleHello: 'سلام، تساں کی حال اے؟' },
+    'khw-PK':        { name: 'Khowar', script: 'Arabic', rtl: true,   sampleHello: 'سلام، تو کیا حال؟' },
+    'en-GB-royal':   { name: 'British English', script: 'Latin', rtl: false, sampleHello: 'Hello, how are you?' },
+    'en-US-nyc':     { name: 'American English (New York)', script: 'Latin', rtl: false, sampleHello: 'Hey, how are you doing?' },
+    'en-US-valley':  { name: 'American English (California)', script: 'Latin', rtl: false, sampleHello: 'Hey, how are you?' },
+    'es-ES':         { name: 'Spanish (Castilian)', script: 'Latin', rtl: false, sampleHello: '¡Hola! ¿Cómo estás?' },
+  };
+
+  function getLanguageName(accentCode) {
+    return (LANGUAGE_MAP[accentCode] || {}).name || accentCode;
+  }
 
   // Asynchronous server database push helper
   async function postToServer(endpoint, payload) {
@@ -131,17 +156,25 @@ document.addEventListener('DOMContentLoaded', () => {
       saveDatabase();
     }
     
-    // Check saved custom API key
+    // Check saved custom API keys
     const savedApiKey = localStorage.getItem('dialect_openrouter_key');
+    const savedAltApiKey = localStorage.getItem('dialect_openrouter_key_alt');
     if (savedApiKey) {
       state.apiKey = savedApiKey;
-      document.getElementById('settings-api-key').value = maskApiKey(savedApiKey);
+    }
+    if (savedAltApiKey) {
+      state.nemotronApiKey = savedAltApiKey;
+    }
+
+    const hasPrimaryKey = isUsableApiKey(state.apiKey);
+    const hasAltKey = isUsableApiKey(state.nemotronApiKey);
+    if (hasPrimaryKey || hasAltKey) {
+      document.getElementById('settings-api-key').value = maskApiKey(state.apiKey || state.nemotronApiKey);
       document.getElementById('stats-api-key-status').textContent = 'VERIFIED';
       document.getElementById('stats-api-key-status').style.color = 'var(--accent-green)';
-    } else if (state.apiKey) {
-      document.getElementById('settings-api-key').value = maskApiKey(state.apiKey);
-      document.getElementById('stats-api-key-status').textContent = 'VERIFIED (.ENV)';
-      document.getElementById('stats-api-key-status').style.color = 'var(--accent-green)';
+    } else {
+      document.getElementById('stats-api-key-status').textContent = 'UNVERIFIED';
+      document.getElementById('stats-api-key-status').style.color = 'var(--accent-amber)';
     }
 
     updateDashboardStats();
@@ -157,6 +190,29 @@ document.addEventListener('DOMContentLoaded', () => {
     return key.substring(0, 8) + '...' + key.substring(key.length - 8);
   }
 
+  function isUsableApiKey(key) {
+    return Boolean(key && typeof key === 'string' && key.length > 20 && !key.includes('YOUR_API_KEY'));
+  }
+
+  function getActiveApiKey(modelType = 'gemma') {
+    if (modelType === 'nemotron') {
+      return state.nemotronApiKey || state.apiKey || '';
+    }
+    return state.apiKey || state.nemotronApiKey || '';
+  }
+
+  function setModelBadge(container, modelName) {
+    if (!container) return;
+    let badge = container.querySelector('.model-pill');
+    if (!badge) {
+      badge = document.createElement('div');
+      badge.className = 'model-pill';
+      badge.style.cssText = 'display:inline-block; margin-bottom:10px; padding:6px 10px; border-radius:999px; font-size:11px; letter-spacing:0.12em; text-transform:uppercase; color:var(--neon-cyan); background:rgba(0,255,255,0.12); border:1px solid rgba(0,255,255,0.24);';
+      container.prepend(badge);
+    }
+    badge.textContent = `Model: ${modelName}`;
+  }
+
   // ==========================================
   // 2. ATTEMPT TO AUTO-LOAD .ENV KEY VIA FETCH
   // ==========================================
@@ -166,18 +222,24 @@ document.addEventListener('DOMContentLoaded', () => {
       const serverRes = await fetch('http://localhost:420/api/sync-env');
       if (serverRes.ok) {
         const data = await serverRes.json();
-        if (data.success && data.apiKey) {
-          state.apiKey = data.apiKey;
-          localStorage.setItem('dialect_openrouter_key', data.apiKey);
-          document.getElementById('settings-api-key').value = maskApiKey(data.apiKey);
+        if (data.success) {
+          if (data.apiKey) {
+            state.apiKey = data.apiKey;
+            localStorage.setItem('dialect_openrouter_key', data.apiKey);
+          }
+          if (data.apiKeyAlt) {
+            state.nemotronApiKey = data.apiKeyAlt;
+            localStorage.setItem('dialect_openrouter_key_alt', data.apiKeyAlt);
+          }
+          document.getElementById('settings-api-key').value = maskApiKey(state.apiKey || state.nemotronApiKey);
           document.getElementById('stats-api-key-status').textContent = 'VERIFIED (.ENV)';
           document.getElementById('stats-api-key-status').style.color = 'var(--accent-green)';
-          if (showNotice) showNotification("API Keys successfully synced from server .env config!", "success");
+          if (showNotice) showNotification('API Keys successfully synced from server .env config!', 'success');
           return;
         }
       }
     } catch (e) {
-      console.warn("Server /api/sync-env not reachable, trying direct .env fetch.", e);
+      console.warn('Server /api/sync-env not reachable, trying direct .env fetch.', e);
     }
 
     // Fallback: try to fetch .env directly (works on local HTTP server)
@@ -185,24 +247,31 @@ document.addEventListener('DOMContentLoaded', () => {
       const response = await fetch('.env');
       if (response.ok) {
         const text = await response.text();
-        // Match pattern: apiKey: 'sk-or-v1-...'
-        const keyRegex = /apiKey:\s*['"]([^'"]+)['"]/g;
-        const matches = keyRegex.exec(text);
-        if (matches && matches[1]) {
-          const fetchedKey = matches[1];
+        const primaryMatch = text.match(/OPENROUTER_API_KEY\s*=\s*([^\r\n]+)/);
+        const altMatch = text.match(/OPENROUTER_API_KEY_ALT\s*=\s*([^\r\n]+)/);
+        const fetchedKey = primaryMatch ? primaryMatch[1].trim().replace(/^['"]|['"]$/g, '') : '';
+        const fetchedAltKey = altMatch ? altMatch[1].trim().replace(/^['"]|['"]$/g, '') : '';
+
+        if (fetchedKey) {
           state.apiKey = fetchedKey;
           localStorage.setItem('dialect_openrouter_key', fetchedKey);
-          document.getElementById('settings-api-key').value = maskApiKey(fetchedKey);
+        }
+        if (fetchedAltKey) {
+          state.nemotronApiKey = fetchedAltKey;
+          localStorage.setItem('dialect_openrouter_key_alt', fetchedAltKey);
+        }
+        if (fetchedKey || fetchedAltKey) {
+          document.getElementById('settings-api-key').value = maskApiKey(state.apiKey || state.nemotronApiKey);
           document.getElementById('stats-api-key-status').textContent = 'VERIFIED (.ENV)';
           document.getElementById('stats-api-key-status').style.color = 'var(--accent-green)';
-          if (showNotice) showNotification("API Keys successfully synced from local .env config!", "success");
+          if (showNotice) showNotification('API Keys successfully synced from local .env config!', 'success');
           return;
         }
       }
-      if (showNotice) showNotification("Failed to fetch .env file structure. Make sure you are using a local HTTP Server.", "error");
+      if (showNotice) showNotification('Failed to fetch .env file structure. Make sure you are using a local HTTP Server.', 'error');
     } catch (e) {
-      console.warn("AJAX .env read blocked or unavailable.", e);
-      if (showNotice) showNotification("Browser blocked loading local .env file. Please paste key manually in Settings.", "error");
+      console.warn('AJAX .env read blocked or unavailable.', e);
+      if (showNotice) showNotification('Browser blocked loading local .env file. Please paste key manually in Settings.', 'error');
     }
   }
 
@@ -766,55 +835,66 @@ document.addEventListener('DOMContentLoaded', () => {
   recordCanvas.height = 40;
 
   async function startRecording() {
+    state.lastMicTranscript = '';
+    const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRec) {
+      state.speechRecognition = new SpeechRec();
+      state.speechRecognition.continuous = true;
+      state.speechRecognition.interimResults = true;
+      state.speechRecognition.lang = 'en-US';
+      let finalTranscript = '';
+      state.speechRecognition.onresult = (event) => {
+        let interim = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const t = event.results[i][0].transcript;
+          if (event.results[i].isFinal) { finalTranscript += t + ' '; }
+          else { interim += t; }
+        }
+        state.lastMicTranscript = (finalTranscript + interim).trim();
+        const preview = state.lastMicTranscript.slice(0, 45);
+        micStatus.textContent = '"' + preview + (state.lastMicTranscript.length > 45 ? '...' : '') + '"';
+      };
+      state.speechRecognition.onerror = () => {};
+      try { state.speechRecognition.start(); } catch(e) {}
+    }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       state.micStream = stream;
       state.recording = true;
-      
       micBtn.classList.add('recording');
-      micStatus.textContent = "CAPTURE FEED ACTIVE";
+      if (!SpeechRec) { micStatus.textContent = "CAPTURE FEED ACTIVE"; }
       micStatus.style.color = "var(--accent-red)";
-      
-      // Web Audio API Visualizer Setup
       state.audioContext = new (window.AudioContext || window.webkitAudioContext)();
       const source = state.audioContext.createMediaStreamSource(stream);
       state.analyser = state.audioContext.createAnalyser();
       state.analyser.fftSize = 256;
       source.connect(state.analyser);
-      
-      // Draw live wave
       drawLiveWaveform();
-      
-      // Timer setup
       state.recordStartTime = Date.now();
       state.recordTimerInterval = setInterval(() => {
         const elapsedSecs = Math.floor((Date.now() - state.recordStartTime) / 1000);
         const mins = String(Math.floor(elapsedSecs / 60)).padStart(2, '0');
         const secs = String(elapsedSecs % 60).padStart(2, '0');
-        recordTimerEl.textContent = `${mins}:${secs}`;
+        recordTimerEl.textContent = mins + ':' + secs;
       }, 1000);
-
       showNotification("Real-time voice feed capture initialized.", "success");
-
     } catch (err) {
       console.warn("Microphone access denied. Emulating synthetic vocoder.", err);
-      // Fallback: draw synthetic floating sinewaves
       state.recording = true;
       micBtn.classList.add('recording');
       micStatus.textContent = "SYNTHETIC VOCODER ACTIVE";
       micStatus.style.color = "var(--neon-cyan)";
-      
       drawSyntheticWaveform();
-
       state.recordStartTime = Date.now();
       state.recordTimerInterval = setInterval(() => {
         const elapsedSecs = Math.floor((Date.now() - state.recordStartTime) / 1000);
         const mins = String(Math.floor(elapsedSecs / 60)).padStart(2, '0');
         const secs = String(elapsedSecs % 60).padStart(2, '0');
-        recordTimerEl.textContent = `${mins}:${secs}`;
+        recordTimerEl.textContent = mins + ':' + secs;
       }, 1000);
     }
   }
+
 
   function stopRecording() {
     state.recording = false;
@@ -824,6 +904,12 @@ document.addEventListener('DOMContentLoaded', () => {
     micStatus.textContent = "Mic Connection Standby";
     micStatus.style.color = "var(--text-secondary)";
     
+    // Stop speech recognition
+    if (state.speechRecognition) {
+      try { state.speechRecognition.stop(); } catch(e) {}
+      state.speechRecognition = null;
+    }
+
     if (state.micStream) {
       state.micStream.getTracks().forEach(track => track.stop());
     }
@@ -831,24 +917,22 @@ document.addEventListener('DOMContentLoaded', () => {
       state.audioContext.close();
     }
     
-    // Clear canvas
     canvasCtx.clearRect(0, 0, recordCanvas.width, recordCanvas.height);
     
-    // Create mock recording file for upload conversion
     const recordDuration = Math.max(1, Math.floor((Date.now() - state.recordStartTime) / 1000));
     state.selectedFile = {
-      name: `live_voice_capture_${Date.now().toString().slice(-5)}.wav`,
+      name: 'live_voice_capture_' + Date.now().toString().slice(-5) + '.wav',
       size: 1024 * 150 * recordDuration,
       type: 'audio/wav',
       duration: recordDuration
     };
 
     document.getElementById('studio-process-btn').disabled = false;
-    showNotification(`Captured vocal log (${recordDuration}s). Ready to process!`, "success");
-    
-    // Log in console
-    printTerminalLine("studio-terminal-body", `Vocal stream captured. Signature cached: ${state.selectedFile.name} [Duration: ${recordDuration}s]. Ready to translate.`, "green");
+    const capturedText = state.lastMicTranscript ? ` Transcript: "${state.lastMicTranscript}"` : '';
+    showNotification('Captured vocal log (' + recordDuration + 's). Ready to process!', 'success');
+    printTerminalLine('studio-terminal-body', 'Vocal stream captured [' + recordDuration + 's].' + capturedText + ' Ready to translate.', 'green');
   }
+
 
   micBtn.addEventListener('click', () => {
     if (!state.recording) {
@@ -1039,53 +1123,77 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Real client for OpenRouter API Calls
   async function callOpenRouterAI(messages, modelType = 'gemma') {
-    if (!state.apiKey) {
-      throw new Error("No API key available");
+    const apiKey = getActiveApiKey(modelType);
+    if (!isUsableApiKey(apiKey)) {
+      throw new Error("No usable OpenRouter API key available");
     }
 
-    // Models requested
-    const model = modelType === 'nemotron' 
+    const model = modelType === 'nemotron'
       ? "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free"
       : "google/gemma-4-31b-it:free";
 
-    // Setup fetch call to OpenRouter endpoint
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${state.apiKey}`,
-        "HTTP-Referer": window.location.origin || "http://localhost:3000",
-        "X-Title": "Dialect Intelligence Cinematic Console"
-      },
+    const response = await fetch('/api/openrouter', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: model,
-        messages: messages,
+        model,
+        messages,
+        modelType,
         temperature: state.gemmaTemp
       })
     });
 
     if (!response.ok) {
-      throw new Error(`OpenRouter network error: ${response.status}`);
+      const errorText = await response.text();
+      throw new Error(`OpenRouter network error: ${response.status} ${errorText}`);
     }
 
     const data = await response.json();
-    if (data.choices && data.choices[0] && data.choices[0].message) {
-      return data.choices[0].message.content;
-    } else {
-      throw new Error("Invalid API payload returned from OpenRouter.");
+    if (data.success && data.content) {
+      return data.content;
     }
+
+    throw new Error(data.error || 'Invalid API payload returned from OpenRouter.');
   }
 
-  // Generate simulated response if API fails or key is missing
   function getFallbackDialectResponse(fileName, sourceAccent, targetAccent) {
+    const targetLang = getLanguageName(targetAccent);
+    const langInfo = LANGUAGE_MAP[targetAccent];
+    // Build a meaningful fallback in the target language
+    let translation = '';
+    let transcript = '';
+    if (targetAccent === 'ur-PK-karachi') {
+      transcript = 'ہیلو، آپ کیسے ہیں؟ آج بہت اچھا دن ہے۔ ٹیکنالوجی واقعی ہماری زندگی بدل رہی ہے۔';
+      translation = 'السلام علیکم! آپ کیسے ہیں؟ آج کا دن واقعی بہت خوبصورت ہے۔ جدید ٹیکنالوجی ہماری زندگی کو ایک نئے انداز سے تشکیل دے رہی ہے۔';
+    } else if (targetAccent === 'ps-PK') {
+      transcript = 'سلام، تاسو سم یاست؟ نن ورځ ډیره ښه ده۔';
+      translation = 'سلامونه! تاسو سم یاست؟ نن ورځ خورا ښه ده۔ ټیکنالوجي زموږ ژوند بدلوي۔';
+    } else if (targetAccent === 'sd-PK') {
+      transcript = 'هيلو، توهان ڪيئن آهيو؟ اڄ ڏينهن تمام سٺو آهي۔';
+      translation = 'سلام! توهان ڪيئن آهيو؟ اڄ جو ڏينهن واقعي سٺو آهي۔ ٽيڪنالاجي اسان جي زندگي بدلائي رهي آهي۔';
+    } else if (targetAccent === 'pa-PK') {
+      transcript = 'ہیلو، تُسی کیویں ہو؟ اج دا دن بہت چنگا اے۔';
+      translation = 'سلام! تُسی کیویں ہو؟ اج دا دن واقعی بہت چنگا اے۔ ٹیکنالوجی ساڈی زندگی بدل رہی اے۔';
+    } else if (targetAccent === 'skr-PK') {
+      transcript = 'ہیلو، تساں کیویں ہو؟ اج دا دن چنگا اے۔';
+      translation = 'سلام! تساں کیویں ہو؟ اج دا دن بہت چنگا اے۔ ٹیکنالوجی ساڈی زندگی وچ نویاں تبدیلیاں لیا رہی اے۔';
+    } else if (targetAccent === 'bal-PK') {
+      transcript = 'سلام، شما چطور ایت؟ امروز روز خوب است۔';
+      translation = 'سلام! شما چطور ایت؟ امروز واقعاً روز خوبی است۔ تکنالوژی زندگی ما را تغییر می‌دهد۔';
+    } else if (targetAccent === 'es-ES') {
+      transcript = '¡Hola! ¿Cómo estás? Hoy es un gran día.';
+      translation = '¡Hola! ¿Cómo estás? Hoy es realmente un día maravilloso. La tecnología está transformando nuestras vidas de formas increíbles.';
+    } else {
+      transcript = 'Hello, how are you today? Technology is truly changing our world.';
+      translation = 'Hello, how are you doing? Today is a wonderful day. Technology is genuinely reshaping our lives in remarkable ways.';
+    }
     return {
-      accent: sourceAccent === 'auto' ? 'Urdu Cultural Accent' : sourceAccent,
-      dialect: targetAccent,
-      transcript: "Suno, baat asal ye hai ke technology to hamare har taraf phel chuki hai. Lekin vision pro pehn’ne ke baad jo visual quality milti hai na, wo wakai kamal hai. It genuinely feels like visual elements are floating right in front of your face.",
-      translation: "Listen, the real deal is that technology has already spread all around us. But the visual quality you get after wearing the vision pro is truly incredible. It genuinely feels like visual elements are floating right in front of your face.",
-      generatedScript: `[SCENE: Neon-cyan grid layout, volumetric grid overlay pulsing]
-[NARRATION - Standard London Accent]: Listen up! Technology has already integrated into every aspect of our lives. But the visual quality of the Vision Pro? It is absolutely stunning. Truly, visual elements appear floating right in front of your face. Highly futuristic.`,
-      processingTime: 2.35
+      accent: sourceAccent === 'auto' ? 'Auto-Detected' : getLanguageName(sourceAccent),
+      dialect: targetLang,
+      transcript: transcript,
+      translation: translation,
+      generatedScript: `[SCENE: Futuristic AI studio, neon grid backdrop]\n[NARRATION - ${targetLang}]: ${translation}`,
+      processingTime: 1.85
     };
   }
 
@@ -1095,6 +1203,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const studioBar = document.getElementById('studio-progress-bar');
   const actionText = document.getElementById('progress-action-text');
   const percentText = document.getElementById('progress-percentage-text');
+  const studioTerminal = document.getElementById('studio-terminal-body');
 
   processBtn.addEventListener('click', async () => {
     if (!state.selectedFile) return;
@@ -1105,14 +1214,16 @@ document.addEventListener('DOMContentLoaded', () => {
     
     const sourceAccent = document.getElementById('select-source-accent').value;
     const targetAccent = document.getElementById('select-target-accent').value;
+    const targetLangName = getLanguageName(targetAccent);
+    const sourceLangName = sourceAccent === 'auto' ? 'the detected source language' : getLanguageName(sourceAccent);
 
     let progress = 0;
-    
-    // Step 1: Multimodal extract
-    actionText.textContent = "Nemotron-3-Nano OMNI: Extracting multimodal frames...";
-    updatePipelineUI('node-nemotron', "NEMOTRON EXTRACTING AUDIO/VIDEO TRACKS");
-    printTerminalLine("studio-terminal-body", `Initiating Hybrid Pipeline: ${state.selectedFile.name}`, "cyan");
-    printTerminalLine("studio-terminal-body", `Nvidia Nemotron-3-Nano Omni: Analysing scene features, accent metadata, and emotional metrics...`, "green");
+
+    setModelBadge(studioTerminal, 'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free');
+    actionText.textContent = 'Nemotron-3-Nano OMNI: Extracting multimodal frames...';
+    updatePipelineUI('node-nemotron', 'NEMOTRON EXTRACTING AUDIO/VIDEO TRACKS');
+    printTerminalLine('studio-terminal-body', `Initiating Hybrid Pipeline: ${state.selectedFile.name}`, 'cyan');
+    printTerminalLine('studio-terminal-body', `Nvidia Nemotron-3-Nano Omni: Analysing scene features, accent metadata, and emotional metrics...`, 'green');
     
     const stepInterval = setInterval(async () => {
       progress += 5;
@@ -1120,61 +1231,69 @@ document.addEventListener('DOMContentLoaded', () => {
       percentText.textContent = `${progress}%`;
 
       if (progress === 30) {
-        actionText.textContent = "Nemotron-3-Nano OMNI: Identifying dialect registers...";
-        printTerminalLine("studio-terminal-body", `Nvidia Nemotron: Sub-dialect patterns located. Mapping accent resonance frequencies.`, "green");
+        actionText.textContent = 'Nemotron-3-Nano OMNI: Identifying dialect registers...';
+        printTerminalLine('studio-terminal-body', `Nvidia Nemotron: Sub-dialect patterns located. Mapping accent resonance frequencies.`, 'green');
       }
 
       if (progress === 60) {
-        actionText.textContent = "Google Gemma 4 31B: Translating and refining narration script...";
-        updatePipelineUI('node-gemma', "GEMMA 4 REFINING VOICE ACCENTS");
-        printTerminalLine("studio-terminal-body", `Routing processed contexts to Google Gemma 4 31B...`, "purple");
-        printTerminalLine("studio-terminal-body", `Google Gemma 4: Rewriting speech hooks, standardizing expressions, and building cinematic video scene markers.`, "purple");
+        actionText.textContent = `Google Gemma 4 31B: Translating to ${targetLangName}...`;
+        updatePipelineUI('node-gemma', `GEMMA 4 → ${targetLangName.toUpperCase()}`);
+        printTerminalLine('studio-terminal-body', `Routing processed contexts to Google Gemma 4 31B for ${targetLangName} translation...`, 'purple');
+        printTerminalLine('studio-terminal-body', `Google Gemma 4: Translating speech to ${targetLangName}, generating cinematic script...`, 'purple');
       }
 
       if (progress === 85) {
-        actionText.textContent = "MongoDB Atlas: Committing transcript schemas...";
-        updatePipelineUI('node-database', "COMMITTING TO MONGO ATLAS CLUSTERS");
-        printTerminalLine("studio-terminal-body", `Simulating Mongoose repository commit: Writing documents to uploads, transcripts, and requests collections.`, "cyan");
+        actionText.textContent = 'MongoDB Atlas: Committing transcript schemas...';
+        updatePipelineUI('node-database', 'COMMITTING TO MONGO ATLAS CLUSTERS');
+        printTerminalLine('studio-terminal-body', `Simulating Mongoose repository commit: Writing documents to uploads, transcripts, and requests collections.`, 'cyan');
       }
 
       if (progress >= 100) {
         clearInterval(stepInterval);
         
-        // Execute generation
         let results;
         const processingStart = Date.now();
 
-        if (state.apiKey) {
+        // Get mic transcript if available
+        const micTranscript = state.lastMicTranscript || '';
+        const inputContext = micTranscript
+          ? `The user spoke the following text: "${micTranscript}"`
+          : `Analyze audio file: ${state.selectedFile.name} recorded in ${sourceLangName}`;
+
+        if (state.apiKey && state.apiKey !== 'sk-or-v1-YOUR_API_KEY_HERE') {
           try {
-            printTerminalLine("studio-terminal-body", "Dispatching live requests to OpenRouter Matrix...", "cyan");
-            // Direct call to Gemini/Nemotron simulation on OpenRouter
+            printTerminalLine('studio-terminal-body', 'Dispatching live requests to OpenRouter Matrix...', 'cyan');
+
+            // Step 1: Transcription
             const nemotronResult = await callOpenRouterAI([
-              { role: "system", content: "You are the NVIDIA Nemotron 3 Nano Omni multimodal engine. Analyze this audio/video request and output the detected dialect and raw transcript content. File: " + state.selectedFile.name },
-              { role: "user", content: `Please identify dialect for accent: ${sourceAccent}. Analyze audio timeline.` }
+              { role: 'system', content: `You are a speech transcription engine. ${inputContext}. Output ONLY the raw transcribed text of what was spoken, in ${sourceLangName}. No explanations, no commentary.` },
+              { role: 'user', content: `Transcribe this audio in ${sourceLangName}.` }
             ], 'nemotron');
 
+            // Step 2: Translation - CRITICAL: must be in targetLangName only
             const gemmaResult = await callOpenRouterAI([
-              { role: "system", content: "You are Google Gemma-4-31b-it. Polishing transcripts, scripts, and converting dialect accent to: " + targetAccent },
-              { role: "user", content: `Here is the context: ${nemotronResult}. Please write a cinematic script with hook titles, visual scene indicators, and tags.` }
+              { role: 'system', content: `You are a professional translator. Translate the following text STRICTLY into ${targetLangName}. Your ENTIRE response must be written ONLY in ${targetLangName}. Do NOT respond in English. Do NOT explain. Output ONLY the translated text.` },
+              { role: 'user', content: micTranscript || nemotronResult }
             ], 'gemma');
 
             results = {
-              accent: "Auto-detected English",
-              dialect: targetAccent,
-              transcript: nemotronResult,
+              accent: sourceLangName,
+              dialect: targetLangName,
+              transcript: micTranscript || nemotronResult,
               translation: gemmaResult,
-              generatedScript: gemmaResult,
+              generatedScript: `[SCENE: Futuristic studio, neon grid backdrop]\n[NARRATION - ${targetLangName}]: ${gemmaResult}`,
               processingTime: parseFloat(((Date.now() - processingStart) / 1000).toFixed(2))
             };
 
           } catch (apiError) {
-            console.warn("Live OpenRouter API request failed. Loading fallback intelligence.", apiError);
-            printTerminalLine("studio-terminal-body", `OpenRouter API connection failed. Loading local high-fidelity fallback assets...`, "cyan");
+            console.warn('Live OpenRouter API request failed. Loading fallback intelligence.', apiError);
+            printTerminalLine('studio-terminal-body', `OpenRouter API connection failed. Loading local fallback...`, 'cyan');
             results = getFallbackDialectResponse(state.selectedFile.name, sourceAccent, targetAccent);
+            if (micTranscript) results.transcript = micTranscript;
           }
         } else {
-          // Fallback if no API key
           results = getFallbackDialectResponse(state.selectedFile.name, sourceAccent, targetAccent);
+          if (micTranscript) results.transcript = micTranscript;
         }
 
         // Commit documents to Database
@@ -1384,10 +1503,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const processingStart = Date.now();
 
         // Check if API key is valid (not placeholder)
-        const hasValidKey = state.apiKey &&
-          state.apiKey !== 'sk-or-v1-YOUR_API_KEY_HERE' &&
-          state.apiKey.startsWith('sk-or-v1-') &&
-          state.apiKey.length > 30;
+        const hasValidKey = isUsableApiKey(getActiveApiKey('gemma'));
 
         if (hasValidKey) {
           try {
@@ -1594,6 +1710,8 @@ IMPORTANT: Base ALL content on the actual URL provided — not generic examples.
       return;
     }
 
+    setModelBadge(scriptTerminal, 'google/gemma-4-31b-it:free');
+
     // Hide waiting, show progress overlay
     scriptWaiting.style.display = 'none';
     scriptOverlay.style.display = 'flex';
@@ -1620,10 +1738,7 @@ IMPORTANT: Base ALL content on the actual URL provided — not generic examples.
         let res;
         const processingStart = Date.now();
 
-        const hasValidKey = state.apiKey &&
-          state.apiKey !== 'sk-or-v1-YOUR_API_KEY_HERE' &&
-          state.apiKey.startsWith('sk-or-v1-') &&
-          state.apiKey.length > 30;
+        const hasValidKey = isUsableApiKey(getActiveApiKey('gemma'));
 
         if (hasValidKey) {
           try {
