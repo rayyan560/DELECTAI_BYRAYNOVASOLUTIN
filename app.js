@@ -1130,7 +1130,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const model = modelType === 'nemotron'
       ? "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free"
-      : "google/gemma-4-31b-it:free";
+      : "openrouter/auto";
 
     const response = await fetch('/api/openrouter', {
       method: 'POST',
@@ -1219,11 +1219,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let progress = 0;
 
-    setModelBadge(studioTerminal, 'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free');
-    actionText.textContent = 'Nemotron-3-Nano OMNI: Extracting multimodal frames...';
-    updatePipelineUI('node-nemotron', 'NEMOTRON EXTRACTING AUDIO/VIDEO TRACKS');
+    setModelBadge(studioTerminal, 'openrouter/auto');
+    actionText.textContent = 'OpenRouter AutoAI: Extracting multimodal frames...';
+    updatePipelineUI('node-nemotron', 'OPENROUTER AUTO EXTRACTING AUDIO/VIDEO TRACKS');
     printTerminalLine('studio-terminal-body', `Initiating Hybrid Pipeline: ${state.selectedFile.name}`, 'cyan');
-    printTerminalLine('studio-terminal-body', `Nvidia Nemotron-3-Nano Omni: Analysing scene features, accent metadata, and emotional metrics...`, 'green');
+    printTerminalLine('studio-terminal-body', `OpenRouter AutoAI: Analysing scene features, accent metadata, and emotional metrics...`, 'green');
     
     const stepInterval = setInterval(async () => {
       progress += 5;
@@ -1231,15 +1231,15 @@ document.addEventListener('DOMContentLoaded', () => {
       percentText.textContent = `${progress}%`;
 
       if (progress === 30) {
-        actionText.textContent = 'Nemotron-3-Nano OMNI: Identifying dialect registers...';
-        printTerminalLine('studio-terminal-body', `Nvidia Nemotron: Sub-dialect patterns located. Mapping accent resonance frequencies.`, 'green');
+        actionText.textContent = 'OpenRouter AutoAI: Identifying dialect registers...';
+        printTerminalLine('studio-terminal-body', `OpenRouter: Sub-dialect patterns located. Mapping accent resonance frequencies.`, 'green');
       }
 
       if (progress === 60) {
-        actionText.textContent = `Google Gemma 4 31B: Translating to ${targetLangName}...`;
-        updatePipelineUI('node-gemma', `GEMMA 4 → ${targetLangName.toUpperCase()}`);
-        printTerminalLine('studio-terminal-body', `Routing processed contexts to Google Gemma 4 31B for ${targetLangName} translation...`, 'purple');
-        printTerminalLine('studio-terminal-body', `Google Gemma 4: Translating speech to ${targetLangName}, generating cinematic script...`, 'purple');
+        actionText.textContent = `OpenRouter AutoAI: Translating to ${targetLangName}...`;
+        updatePipelineUI('node-gemma', `OPENROUTER → ${targetLangName.toUpperCase()}`);
+        printTerminalLine('studio-terminal-body', `Routing processed contexts to OpenRouter AutoAI for ${targetLangName} translation...`, 'purple');
+        printTerminalLine('studio-terminal-body', `OpenRouter AutoAI: Translating speech to ${targetLangName}, generating cinematic script...`, 'purple');
       }
 
       if (progress === 85) {
@@ -1487,13 +1487,13 @@ document.addEventListener('DOMContentLoaded', () => {
       analyzerPercent.textContent = `${progress}%`;
 
       if (progress === 20) {
-        analyzerAction.textContent = "Nemotron Omni: Capturing video stream frames...";
+        analyzerAction.textContent = "OpenRouter AutoAI: Capturing video stream frames...";
       }
       if (progress === 50) {
-        analyzerAction.textContent = "Nemotron Omni: Deciphering scene scripts & dialects...";
+        analyzerAction.textContent = "OpenRouter AutoAI: Deciphering scene scripts & dialects...";
       }
       if (progress === 80) {
-        analyzerAction.textContent = "Gemma 4 31B: Polishing hooks, captions & summaries...";
+        analyzerAction.textContent = "OpenRouter AutoAI: Polishing hooks, captions & summaries...";
       }
 
       if (progress >= 100) {
@@ -1710,7 +1710,7 @@ IMPORTANT: Base ALL content on the actual URL provided — not generic examples.
       return;
     }
 
-    setModelBadge(scriptTerminal, 'google/gemma-4-31b-it:free');
+    setModelBadge(scriptTerminal, 'openrouter/auto');
 
     // Hide waiting, show progress overlay
     scriptWaiting.style.display = 'none';
@@ -1726,10 +1726,10 @@ IMPORTANT: Base ALL content on the actual URL provided — not generic examples.
       scriptPercent.textContent = `${progress}%`;
 
       if (progress === 30) {
-        scriptAction.textContent = "Gemma 4 31B: Organizing narrative structure...";
+        scriptAction.textContent = "OpenRouter AutoAI: Organizing narrative structure...";
       }
       if (progress === 70) {
-        scriptAction.textContent = "Gemma 4 31B: Refining regional dialect flow...";
+        scriptAction.textContent = "OpenRouter AutoAI: Refining regional dialect flow...";
       }
 
       if (progress >= 100) {
