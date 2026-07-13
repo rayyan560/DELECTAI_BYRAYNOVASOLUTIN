@@ -1,0 +1,35 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Link Analyzer Test</title>
+</head>
+<body>
+  <input id="url" placeholder="Paste video URL" style="width:70%" />
+  <button id="btn">Analyze</button>
+  <pre id="out"></pre>
+
+  <script>
+    async function analyze(url) {
+      const res = await fetch('/api/analyze-link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url })
+      });
+      return res.json();
+    }
+
+    document.getElementById('btn').addEventListener('click', async () => {
+      const url = document.getElementById('url').value.trim();
+      if (!url) return alert('Paste a URL');
+      document.getElementById('out').textContent = 'Working...';
+      try {
+        const data = await analyze(url);
+        document.getElementById('out').textContent = JSON.stringify(data, null, 2);
+      } catch (e) {
+        document.getElementById('out').textContent = 'Error: ' + e.message;
+      }
+    });
+  </script>
+</body>
+</html>

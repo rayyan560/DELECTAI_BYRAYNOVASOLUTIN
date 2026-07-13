@@ -63,6 +63,11 @@ document.addEventListener('DOMContentLoaded', () => {
     return (LANGUAGE_MAP[accentCode] || {}).name || accentCode;
   }
 
+  function getLanguageCode(accentCode) {
+    if (!accentCode || accentCode === 'auto') return '';
+    return accentCode.split('-')[0];
+  }
+
   // Asynchronous server database push helper
   async function postToServer(endpoint, payload) {
     if (!state.isServerOnline) return;
@@ -1045,14 +1050,15 @@ document.addEventListener('DOMContentLoaded', () => {
     state.selectedFile = {
       name: file.name,
       size: file.size,
-      type: file.type || 'video/mp4',
-      duration: duration
+      type: file.type || 'audio/wav',
+      duration: duration,
+      file: file
     };
 
     document.getElementById('studio-process-btn').disabled = false;
     showNotification(`Imported: ${file.name} [Size: ${(file.size/1024/1024).toFixed(1)}MB]`, "success");
     
-    printTerminalLine("studio-terminal-body", `Imported external log: ${file.name} (type: ${file.type || 'video/mp4'}). Duration set to: ${duration}s. Directives cached.`, "cyan");
+    printTerminalLine("studio-terminal-body", `Imported external log: ${file.name} (type: ${file.type || 'audio/wav'}). Duration set to: ${duration}s. Directives cached.`, "cyan");
   }
 
   // ==========================================
@@ -1156,6 +1162,47 @@ document.addEventListener('DOMContentLoaded', () => {
     throw new Error(data.error || 'Invalid API payload returned from OpenRouter.');
   }
 
+  function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = reader.result;
+        const base64 = result.split(',')[1];
+        resolve(base64);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function transcribeAudioFile(file, language = '') {
+    if (!file) {
+      throw new Error('No audio file provided for transcription.');
+    }
+    const base64 = await fileToBase64(file);
+    const response = await fetch('/api/openrouter-audio', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        fileName: file.name,
+        fileType: file.type || 'audio/wav',
+        fileBase64: base64,
+        language
+      })
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      throw new Error(`Audio transcription failed: ${response.status} ${errText}`);
+    }
+
+    const data = await response.json();
+    if (data.success && data.transcript) {
+      return data.transcript;
+    }
+    throw new Error(data.error || 'Audio transcription failed without transcript.');
+  }
+
   function getFallbackDialectResponse(fileName, sourceAccent, targetAccent) {
     const targetLang = getLanguageName(targetAccent);
     const langInfo = LANGUAGE_MAP[targetAccent];
@@ -1256,30 +1303,34 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Get mic transcript if available
         const micTranscript = state.lastMicTranscript || '';
+        const selectedAudioFile = state.selectedFile?.file;
         const inputContext = micTranscript
           ? `The user spoke the following text: "${micTranscript}"`
           : `Analyze audio file: ${state.selectedFile.name} recorded in ${sourceLangName}`;
+
+        if (!micTranscript && !selectedAudioFile) {
+          throw new Error('No loaded audio file available for transcription. Please re-import the audio file and try again.');
+        }
 
         if (state.apiKey && state.apiKey !== 'sk-or-v1-YOUR_API_KEY_HERE') {
           try {
             printTerminalLine('studio-terminal-body', 'Dispatching live requests to OpenRouter Matrix...', 'cyan');
 
             // Step 1: Transcription
-            const nemotronResult = await callOpenRouterAI([
-              { role: 'system', content: `You are a speech transcription engine. ${inputContext}. Output ONLY the raw transcribed text of what was spoken, in ${sourceLangName}. No explanations, no commentary.` },
-              { role: 'user', content: `Transcribe this audio in ${sourceLangName}.` }
-            ], 'nemotron');
+            const nemotronResult = micTranscript
+              ? micTranscript
+              : await transcribeAudioFile(selectedAudioFile, getLanguageCode(sourceAccent));
 
             // Step 2: Translation - CRITICAL: must be in targetLangName only
             const gemmaResult = await callOpenRouterAI([
               { role: 'system', content: `You are a professional translator. Translate the following text STRICTLY into ${targetLangName}. Your ENTIRE response must be written ONLY in ${targetLangName}. Do NOT respond in English. Do NOT explain. Output ONLY the translated text.` },
-              { role: 'user', content: micTranscript || nemotronResult }
+              { role: 'user', content: nemotronResult }
             ], 'gemma');
 
             results = {
               accent: sourceLangName,
               dialect: targetLangName,
-              transcript: micTranscript || nemotronResult,
+              transcript: nemotronResult,
               translation: gemmaResult,
               generatedScript: `[SCENE: Futuristic studio, neon grid backdrop]\n[NARRATION - ${targetLangName}]: ${gemmaResult}`,
               processingTime: parseFloat(((Date.now() - processingStart) / 1000).toFixed(2))
@@ -1472,166 +1523,180 @@ document.addEventListener('DOMContentLoaded', () => {
     analyzerWaiting.style.display = 'none';
     analyzerOverlay.style.display = 'flex';
     analyzeBtn.disabled = true;
+    analyzerTerminal.innerHTML = '';
 
+    const processingStart = Date.now();
     let progress = 0;
-    const platform = state.selectedPlatform;
 
-    // Pulse Three.js Globe rotation speeds for visual feedback
-    if (globeMesh) {
-      gsap.to(globeMesh.rotation, { y: "+=15", duration: 4, ease: 'power2.inOut' });
-    }
-
-    const interval = setInterval(async () => {
-      progress += 10;
+    const updateProgress = (pct, msg) => {
+      progress = pct;
       analyzerBar.style.width = `${progress}%`;
       analyzerPercent.textContent = `${progress}%`;
+      analyzerAction.textContent = msg;
+      printTerminalLine('analyzer-terminal-body', msg, 'cyan');
+    };
 
-      if (progress === 20) {
-        analyzerAction.textContent = "OpenRouter AutoAI: Capturing video stream frames...";
+    try {
+      // Step 1: Detect platform and extract basic info from URL
+      updateProgress(20, 'Analyzing social media link...');
+      const urlLower = linkInput.toLowerCase();
+      let platform = 'Unknown';
+      let videoTitle = 'Video';
+
+      if (urlLower.includes('youtube.com') || urlLower.includes('youtu.be')) {
+        platform = 'YouTube';
+        const match = linkInput.match(/(?:watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/);
+        videoTitle = match ? `YouTube Video (${match[1].slice(0, 8)})` : 'YouTube Video';
+      } else if (urlLower.includes('tiktok.com')) {
+        platform = 'TikTok';
+        videoTitle = 'TikTok Video';
+      } else if (urlLower.includes('instagram.com') || urlLower.includes('instagr.am')) {
+        platform = 'Instagram';
+        videoTitle = 'Instagram Reel';
+      } else if (urlLower.includes('facebook.com') || urlLower.includes('fb.watch')) {
+        platform = 'Facebook';
+        videoTitle = 'Facebook Video';
+      } else if (urlLower.includes('x.com') || urlLower.includes('twitter.com')) {
+        platform = 'X/Twitter';
+        videoTitle = 'X/Twitter Video';
       }
-      if (progress === 50) {
-        analyzerAction.textContent = "OpenRouter AutoAI: Deciphering scene scripts & dialects...";
-      }
-      if (progress === 80) {
-        analyzerAction.textContent = "OpenRouter AutoAI: Polishing hooks, captions & summaries...";
-      }
 
-      if (progress >= 100) {
-        clearInterval(interval);
+      updateProgress(40, `✓ Platform detected: ${platform}`);
 
-        let res;
-        const processingStart = Date.now();
+      // Step 2: Prompt user to record or upload audio
+      updateProgress(55, 'Waiting for audio input...');
+      printTerminalLine('analyzer-terminal-body', 'Note: Please record audio or upload from the selected file, then click again.', 'yellow');
 
-        // Check if API key is valid (not placeholder)
-        const hasValidKey = isUsableApiKey(getActiveApiKey('gemma'));
-
-        if (hasValidKey) {
-          try {
-            // Structured JSON prompt so AI returns parseable data based on real URL
-            const structuredPrompt = `You are a social media content strategist AI. A user has shared this ${platform.toUpperCase()} video link:
-
-URL: ${linkInput}
-
-Analyze the URL carefully — look at keywords in the path, any readable words in the video ID, or domain patterns to infer the video topic.
-
-Generate realistic, URL-relevant content in this EXACT JSON format (no markdown, no extra text):
-
-{
-  "transcript": "A realistic 2-3 sentence description of what this video likely contains based on the URL keywords and topic",
-  "hooks": [
-    "First high-impact viral hook for ${platform} — make it specific to the URL topic",
-    "Second viral hook with a curiosity or controversy angle"
-  ],
-  "captions": "An engaging 2-3 sentence caption with relevant emojis, optimized for ${platform}",
-  "hashtags": ["#RelevantTag1", "#RelevantTag2", "#RelevantTag3", "#PlatformTag", "#TrendingTag"],
-  "summary": "One sentence executive summary of this video content"
-}
-
-IMPORTANT: Base ALL content on the actual URL provided — not generic examples. Output JSON only.`;
-
-            const callRes = await callOpenRouterAI([
-              { role: "system", content: "You are a social media content analyst. You MUST respond with valid JSON only. No markdown fences, no explanation text." },
-              { role: "user", content: structuredPrompt }
-            ], 'gemma');
-
-            // Robustly extract JSON from AI response
-            const parsed = extractJsonFromAIResponse(callRes);
-
-            if (parsed && parsed.transcript && parsed.hooks && parsed.captions) {
-              res = {
-                transcript: parsed.transcript,
-                hooks: Array.isArray(parsed.hooks) ? parsed.hooks : [parsed.hooks, `Discover more trending ${platform} content like this.`],
-                captions: parsed.captions,
-                hashtags: Array.isArray(parsed.hashtags) ? parsed.hashtags : [`#${platform}`, '#Viral', '#Trending', '#Content', '#Social'],
-                summary: parsed.summary || 'AI-generated content analysis complete.'
-              };
-            } else {
-              // AI responded but JSON failed — use URL-aware fallback
-              console.warn('[Analyzer] AI response could not be parsed as JSON, using URL-aware fallback.');
-              res = generateUrlAwareFallback(linkInput, platform);
-            }
-
-          } catch (e) {
-            console.warn('Live social analysis failed. Using URL-aware fallback.', e);
-            res = generateUrlAwareFallback(linkInput, platform);
-          }
-        } else {
-          // No valid API key — use URL-aware intelligent fallback
-          console.info('[Analyzer] No valid API key. Using URL-aware content generator.');
-          res = generateUrlAwareFallback(linkInput, platform);
-        }
-
-        const processingTime = parseFloat(((Date.now() - processingStart) / 1000).toFixed(2));
-
-        // Save to Database
-        const socialId = 'sa_' + Date.now().toString().slice(-4);
-        const requestId = 'req_' + Date.now().toString().slice(-4);
-
-        const newAnalysis = {
-          _id: socialId,
-          userId: 'u_01',
-          videoUrl: linkInput,
-          platform: platform,
-          transcript: res.transcript,
-          generatedHooks: res.hooks,
-          captions: res.captions,
-          hashtags: res.hashtags,
-          aiSummary: res.summary,
-          createdAt: new Date().toISOString()
-        };
-
-        const newRequest = {
-          _id: requestId,
-          userId: 'u_01',
-          requestType: 'social_analysis',
-          input: linkInput,
-          output: `Social hooks and script indexes cataloged.`,
-          processingTime: processingTime,
-          createdAt: new Date().toISOString()
-        };
-
-        state.database.socialAnalysis.push(newAnalysis);
-        state.database.aiRequests.push(newRequest);
-        saveDatabase();
-
-        postToServer('social', newAnalysis);
-        postToServer('request', newRequest);
-
-        // Update UI
-        updateDashboardStats();
-        renderDatabaseTable();
-
-        // Render clean results — no agent execution noise
-        analyzerTerminal.innerHTML = `
-          <div style="margin-bottom: 16px;">
-            <div style="color: var(--neon-cyan); font-size: 10px; font-weight: 700; letter-spacing: 2px; margin-bottom: 6px; opacity: 0.7;">VIDEO DESCRIPTION</div>
-            <div style="color: var(--text-secondary); font-size: 13px; line-height: 1.7; background: rgba(255,255,255,0.04); border-left: 3px solid var(--neon-cyan); padding: 10px 14px; border-radius: 4px;">${res.transcript}</div>
-          </div>
-          <div style="margin-bottom: 16px;">
-            <div style="color: var(--neon-purple); font-size: 10px; font-weight: 700; letter-spacing: 2px; margin-bottom: 8px; opacity: 0.7;">VIRAL HOOKS</div>
-            <div style="color: #fff; font-size: 14px; font-weight: 600; margin-bottom: 8px; padding: 8px 14px; background: rgba(139,92,246,0.12); border-radius: 6px; border-left: 3px solid var(--neon-purple);">❶ ${res.hooks[0]}</div>
-            <div style="color: #fff; font-size: 14px; font-weight: 600; padding: 8px 14px; background: rgba(139,92,246,0.12); border-radius: 6px; border-left: 3px solid var(--neon-purple);">❷ ${res.hooks[1]}</div>
-          </div>
-          <div style="margin-bottom: 16px;">
-            <div style="color: var(--accent-green); font-size: 10px; font-weight: 700; letter-spacing: 2px; margin-bottom: 6px; opacity: 0.7;">CAPTION</div>
-            <div style="color: #e2e8f0; font-size: 13px; line-height: 1.7; background: rgba(74,222,128,0.06); border-left: 3px solid var(--accent-green); padding: 10px 14px; border-radius: 4px;">${res.captions}</div>
-          </div>
-          <div style="margin-bottom: 16px;">
-            <div style="color: var(--neon-cyan); font-size: 10px; font-weight: 700; letter-spacing: 2px; margin-bottom: 8px; opacity: 0.7;">HASHTAGS</div>
-            <div style="display: flex; flex-wrap: wrap; gap: 6px;">${res.hashtags.map(tag => `<span style="background: rgba(0,243,255,0.1); color: var(--neon-cyan); padding: 3px 10px; border-radius: 20px; font-size: 12px; border: 1px solid rgba(0,243,255,0.25);">${tag}</span>`).join('')}</div>
-          </div>
-          <div>
-            <div style="color: var(--text-muted); font-size: 10px; font-weight: 700; letter-spacing: 2px; margin-bottom: 6px; opacity: 0.7;">AI SUMMARY</div>
-            <div style="color: var(--text-muted); font-size: 12px; font-style: italic; line-height: 1.6;">${res.summary}</div>
-          </div>
-        `;
-
-
+      // Check if user has recorded mic audio or uploaded file
+      if (!state.lastMicTranscript && !state.selectedFile?.file) {
+        showNotification("Please record audio via microphone OR import an audio file first, then retry.", "warning");
         analyzerOverlay.style.display = 'none';
         analyzeBtn.disabled = false;
-        showNotification("Social Link analyzed and committed to MongoDB collections!", "success");
+        return;
       }
-    }, 150);
+
+      updateProgress(70, 'Transcribing audio...');
+      let transcript = '';
+
+      // Use microphone transcript if available, otherwise transcribe uploaded file
+      if (state.lastMicTranscript) {
+        transcript = state.lastMicTranscript;
+        updateProgress(75, `✓ Using microphone transcript (${transcript.length} chars)`);
+      } else if (state.selectedFile?.file) {
+        // Transcribe uploaded file using OpenRouter
+        const base64 = await fileToBase64(state.selectedFile.file);
+        const transcriptRes = await fetch('/api/openrouter-audio', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            fileName: state.selectedFile.file.name,
+            fileType: state.selectedFile.file.type || 'audio/wav',
+            fileBase64: base64,
+            language: ''
+          })
+        });
+
+        if (!transcriptRes.ok) {
+          throw new Error(`Transcription failed: ${transcriptRes.status}`);
+        }
+
+        const transcriptData = await transcriptRes.json();
+        if (!transcriptData.success || !transcriptData.transcript) {
+          throw new Error('No transcript received');
+        }
+
+        transcript = transcriptData.transcript;
+        updateProgress(75, `✓ Audio transcribed (${transcript.length} chars)`);
+      }
+
+      if (!transcript) {
+        throw new Error('No audio available for transcription');
+      }
+
+      // Step 3: Translate to Urdu
+      updateProgress(85, 'Translating to Urdu...');
+      const translationRes = await callOpenRouterAI([
+        { role: 'system', content: `You are a professional translator. Translate the following text STRICTLY into Urdu. Your ENTIRE response must be written ONLY in Urdu. Do NOT respond in English. Do NOT explain. Output ONLY the translated text.` },
+        { role: 'user', content: transcript }
+      ], 'gemma');
+
+      if (!translationRes) {
+        throw new Error('Translation failed');
+      }
+
+      updateProgress(95, '✓ Translation complete');
+
+      // Step 4: Save to database
+      const socialId = 'sa_' + Date.now().toString().slice(-4);
+      const processingTime = parseFloat(((Date.now() - processingStart) / 1000).toFixed(2));
+
+      const newAnalysis = {
+        _id: socialId,
+        userId: 'u_01',
+        videoUrl: linkInput,
+        platform: platform,
+        videoTitle: videoTitle,
+        transcript: transcript,
+        translation: translationRes,
+        createdAt: new Date().toISOString()
+      };
+
+      const newRequest = {
+        _id: 'req_' + Date.now().toString().slice(-4),
+        userId: 'u_01',
+        requestType: 'social_video_lite_analysis',
+        input: linkInput,
+        output: `Transcribed and translated video content`,
+        processingTime: processingTime,
+        createdAt: new Date().toISOString()
+      };
+
+      state.database.socialAnalysis.push(newAnalysis);
+      state.database.aiRequests.push(newRequest);
+      saveDatabase();
+
+      postToServer('social', newAnalysis);
+      postToServer('request', newRequest);
+
+      updateProgress(100, '✓ Analysis complete!');
+
+      // Display results
+      analyzerTerminal.innerHTML = `
+        <div style="margin-bottom: 16px;">
+          <div style="color: var(--neon-cyan); font-size: 10px; font-weight: 700; letter-spacing: 2px; margin-bottom: 6px; opacity: 0.7;">PLATFORM & LINK</div>
+          <div style="color: #fff; font-size: 12px; line-height: 1.6; background: rgba(0,243,255,0.06); border-left: 3px solid var(--neon-cyan); padding: 10px 14px; border-radius: 4px;">
+            <div><strong>Platform:</strong> ${platform}</div>
+            <div><strong>URL:</strong> ${linkInput.substring(0, 60)}...</div>
+          </div>
+        </div>
+        <div style="margin-bottom: 16px;">
+          <div style="color: var(--neon-cyan); font-size: 10px; font-weight: 700; letter-spacing: 2px; margin-bottom: 6px; opacity: 0.7;">TRANSCRIPT (Original)</div>
+          <div style="color: var(--text-secondary); font-size: 12px; line-height: 1.7; background: rgba(255,255,255,0.04); border-left: 3px solid var(--neon-cyan); padding: 10px 14px; border-radius: 4px; max-height: 200px; overflow-y: auto;">${transcript}</div>
+        </div>
+        <div style="margin-bottom: 16px;">
+          <div style="color: var(--accent-green); font-size: 10px; font-weight: 700; letter-spacing: 2px; margin-bottom: 6px; opacity: 0.7;">TRANSLATION (Urdu)</div>
+          <div style="color: #e2e8f0; font-size: 13px; line-height: 1.8; background: rgba(74,222,128,0.06); border-left: 3px solid var(--accent-green); padding: 10px 14px; border-radius: 4px; max-height: 200px; overflow-y: auto; direction: rtl;">${translationRes}</div>
+        </div>
+        <div style="margin-top: 16px; padding: 10px; background: rgba(139,92,246,0.1); border-left: 3px solid var(--neon-purple); border-radius: 4px;">
+          <div style="color: var(--neon-purple); font-size: 11px; font-weight: 600;">Processing Time: ${processingTime}s</div>
+          <div style="color: var(--text-muted); font-size: 11px; margin-top: 4px;">✓ Real transcription + translation (no guessing)</div>
+        </div>
+      `;
+
+      updateDashboardStats();
+      renderDatabaseTable();
+      showNotification("✓ Video analyzed, transcribed & translated successfully!", "success");
+
+    } catch (error) {
+      console.error('[Link Analyzer Lite] Error:', error);
+      analyzerTerminal.innerHTML = `<div style="color: var(--accent-red); padding: 10px;">Error: ${error.message}</div>`;
+      showNotification(`Analysis failed: ${error.message}`, "error");
+    } finally {
+      setTimeout(() => {
+        analyzerOverlay.style.display = 'none';
+        analyzeBtn.disabled = false;
+      }, 1500);
+    }
   });
 
   // Copy social results
